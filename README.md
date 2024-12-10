@@ -14,26 +14,36 @@
 <!-- ![Pennylane](https://assets.cloud.pennylane.ai/pennylane_website/generic/logo.svg) -->
 
 pLazyQML, a software package designed to accelerate, automate, and streamline experimentation with quantum machine learning models on classical computers. pLazyQML reduces the complexity and time required for developing and testing quantum-enhanced machine learning models.
+
+## Installation
+```bash
+$ pip install lazyqml --upgrade
+```
 ## Usage
 ```python 
-from lazyqml.lazyqml import QuantumClassifier
-from lazyqml.Global.globalEnums import *
-from sklearn.datasets import load_breast_cancer, load_iris
-from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+from lazyqml.lazyqml import *
+
 # Load data
 data = load_iris()
 X = data.data
 y = data.target
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.3,random_state =123)  
-
-# Initialize L azyClass ifier
-classifier = QuantumClassifier(nqubits={4,8,16},verbose=True,sequential=False,backend=Backend.lightningQubit)
+classifier = QuantumClassifier(nqubits={4}, classifiers={Model.QNN, Model.QSVM}, epochs=10)
 
 # Fit and predict
-classifier.fit(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test)
+classifier.fit(X=X, y=y, test_size=0.4)
 ```
+### Output
+|    |   Qubits | Model      | Embedding     | Ansatz                     | Features   |   Time taken |   Accuracy |   Balanced Accuracy |   F1 Score |
+|---:|---------:|:-----------|:--------------|:---------------------------|:-----------|-------------:|-----------:|--------------------:|-----------:|
+|  0 |        4 | Model.QSVM | Embedding.RZ  |                            | ~          |     18.2478  |   0.966667 |            0.966667 |   0.966583 |
+|  1 |        4 | Model.QSVM | Embedding.RY  |                            | ~          |     13.8088  |   0.966667 |            0.966667 |   0.966583 |
+|  2 |        4 | Model.QSVM | Embedding.RX  |                            | ~          |     13.7079  |   0.966667 |            0.966667 |   0.966583 |
+|  3 |        4 | Model.QNN  | Embedding.RX  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.1699  |   0.933333 |            0.933333 |   0.932896 |
+|  4 |        4 | Model.QNN  | Embedding.RZ  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.7565  |   0.9      |            0.9      |   0.899206 |
+|  5 |        4 | Model.QNN  | Embedding.RY  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.8614  |   0.9      |            0.9      |   0.899948 |
+
 
 ## License & Compatibility
 - Free software: MIT License
@@ -47,37 +57,160 @@ classifier.fit(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test)
 - Alejandro Leal Castaño - lealcalejandro@uniovi.es
 - Group - https://qhpc.uniovi.es
 
-## Parameters: 
-- **verbose** _bool, optional (default=False)_: If set to True, detailed messages about the training process will be displayed, helping users to monitor the progress and debug if necessary.
-- **customMetric** _function, optional (default=None)_: A custom evaluation function provided by the user to evaluate the models. This allows the user to define their own metrics tailored to specific requirements.
-- **customImputerNum** _function, optional (default=None)_: A custom function provided by the user to handle the imputation of missing numeric data. This provides flexibility in how missing values are treated in the dataset.
-- **customImputerCat** _function, optional (default=None)_: A custom function provided by the user to handle the imputation of missing categorical data, allowing users to apply their own strategies for handling missing categorical values.
-- **prediction** _bool, optional (default=False)_: If set to True, the predictions made by all the models will be returned as a pandas DataFrame for easy comparison and analysis of different models’ outputs.
-- **classifiers** _set of enums, optional (default={Model.ALL})_: A set specifying which classifiers to train. Options include `{Model.ALL, Model.QSVM, Model.QNN, Model.QNN_BAG}`, enabling the user to select specific quantum classifiers or train all available ones.
-- **embeddings** _set of enums, optional (default={Embedding.ALL})_: A set specifying which embeddings to use for training. Options include `{Embedding.ALL, Embedding.RX, Embedding.RZ, Embedding.RY, Embedding.ZZ, Embedding.AMP}`, allowing the user to choose specific data encodings.
-- **ansatzs** _set of enums, optional (default={Ansatzs.ALL})_: A set specifying which quantum circuit ansatzes to use. Options include `{Ansatzs.ALL, Ansatzs.HCZRX, Ansatzs.TREE_TENSOR, Ansatzs.TWO_LOCAL, Ansatzs.HARDWARE_EFFICIENT}`, giving users the ability to experiment with different quantum circuit structures.
-- **randomState** _int, optional (default=1234)_: An integer seed used to ensure the repeatability of experiments, making the results consistent across different runs.
-- **nqubits** _int, optional (default=8)_: Specifies the number of qubits for the quantum circuits used by the models. This parameter controls the size of the quantum circuits.
-- **numLayers** _int, optional (default=5)_: Indicates the number of layers in the Quantum Neural Network (QNN) models, affecting the depth and potentially the performance of the neural networks.
-- **numPredictors** _int, optional (default=10)_: Specifies the number of different predictors used in Quantum Neural Networks with Bagging (QNN_Bag). This parameter controls the ensemble size in bagging models.
-- **maxSamples** _float, optional (default=1.0)_: A floating point number between 0 and 1.0 indicating the fraction of the dataset to be used for each Quantum Neural Network with Bagging (QNN_Bag).
-- **maxFeatures** _float, optional (default=0.8)_: A floating point number between 0 and 1.0 indicating the fraction of the dataset features to be used for each Quantum Neural Network with Bagging (QNN_Bag).
-- **runs** _int, optional (default=1)_: The number of training runs for the Quantum Neural Network (QNN) models. This parameter determines how many times the model is trained and evaluated.
-- **learningRate** _float, optional (default=0.01)_: The learning rate for the gradient descent optimization process used in all Quantum Neural Networks (QNNs). This controls how much the model's weights are updated during each training step.
-- **epochs** _int, optional (default=100)_: The number of complete passes through the dataset during model fitting. More epochs can allow the model to converge more accurately, though may increase computation time.
-- **backend** _enum, optional (default=Backend.lightningQubit)_: This field controls the acceleration used in the quantum simulator. Supported values are `{Backend.lightningQubit, Backend.lightningGPU, Backend.defaultQubit}`, specifying which backend to use for quantum circuit simulation.
-- **threshold** _int, optional (default=22)_: Integer value used to delimit from which number of qubits the internal operations of the models start to be parallelized. This helps optimize performance for larger quantum circuits.
-- **cores** _int, optional (default=-1)_: Number of processes to be created by the dispatcher to run the selected models. Each process will be allocated as many CPU cores as possible for parallel execution.
-## Functions: 
-- **fit** _(X, y, test\_size, showTable=True)_: Fit Classification algorithms to X and y using hold-out, predict and score on test set (test_size).
-        If the dimensions of the training vectors are not compatible with the different models, a 
-        PCA transformation will be used in order to reduce the dimensionality to a compatible space.
-        All categories must be in the training data if there are new categories in the test date the
-        function will not work. The objective variable must be in a numerical form like LabelEncoder or
-        OrdinalEncoder. Onehot or strings won't work.
-- **repeated_cross_validation** _(X, y, n_splits=5, n_repeats=10, showTable=True)_: Perform repeated cross-validation on the given dataset and model.This method splits the dataset into multiple train-test splits using RepeatedStratifiedKFold,
-        fits the model on the training set, evaluates it on the validation set, and aggregates the results.
+## QuantumClassifier Parameters: 
+#### Core Parameters:
+- **`nqubits`**: `Set[int]`
+  - Description: Set of qubit indices, where each value must be greater than 0.
+  - Validation: Ensures that all elements are integers > 0.
 
-- **leave_one_out** _(X, y, showTable=True)_: Perform leave-one-out cross-validation on the given dataset and model.        This method splits the dataset into multiple train-test splits using LeaveOneOut,
-        fits the model on the training set, evaluates it on the validation set, and aggregates the results.
+- **`randomstate`**: `int`
+  - Description: Seed value for random number generation.
+  - Default: `1234`
+
+- **`predictions`**: `bool`
+  - Description: Flag to determine if predictions are enabled.
+  - Default: `False`
+
+#### Model Structure Parameters:
+- **`numPredictors`**: `int`
+  - Description: Number of predictors used in the QNN with bagging.
+  - Constraints: Must be greater than 0.
+  - Default: `10`
+
+- **`numLayers`**: `int`
+  - Description: Number of layers in the Quantum Neural Networks.
+  - Constraints: Must be greater than 0.
+  - Default: `5`
+
+#### Set-Based Configuration Parameters:
+- **`classifiers`**: `Set[Model]`
+  - Description: Set of classifier models.
+  - Constraints: Must contain at least one classifier.
+  - Default: `{Model.ALL}`
+  - Options: `{Model.QNN, Model.QSVM, Model.QNN_BAG}`
+
+- **`ansatzs`**: `Set[Ansatzs]`
+  - Description: Set of quantum ansatz configurations.
+  - Constraints: Must contain at least one ansatz.
+  - Default: `{Ansatzs.ALL}`
+  - Options: `{Ansatzs.RX, Ansatzs.RZ, Ansatzs.RY, Ansatzs.ZZ, Ansatzs.AMP}`
+
+- **`embeddings`**: `Set[Embedding]`
+  - Description: Set of embedding strategies.
+  - Constraints: Must contain at least one embedding.
+  - Default: `{Embedding.ALL}`
+  - Options: `{Embedding.HCZRX, Embedding.TREE_TENSOR, Embedding.TWO_LOCAL, Embedding.HARDWARE_EFFICENT}`
+
+- **`features`**: `Set[float]`
+  - Description: Set of feature values (must be between 0 and 1).
+  - Constraints: Values > 0 and <= 1.
+  - Default: `{0.3, 0.5, 0.8}`
+
+#### Training Parameters:
+- **`learningRate`**: `float`
+  - Description: Learning rate for optimization.
+  - Constraints: Must be greater than 0.
+  - Default: `0.01`
+
+- **`epochs`**: `int`
+  - Description: Number of training epochs.
+  - Constraints: Must be greater than 0.
+  - Default: `100`
+
+- **`batchSize`**: `int`
+  - Description: Size of each batch during training.
+  - Constraints: Must be greater than 0.
+  - Default: `8`
+
+#### Threshold and Sampling:
+- **`threshold`**: `int`
+  - Description: Decision threshold for parallelization, if the model is bigger than this threshold it will use GPU.
+  - Constraints: Must be greater than 0.
+  - Default: `22`
+
+- **`maxSamples`**: `float`
+  - Description: Maximum proportion of samples to be used from the dataset characteristics.
+  - Constraints: Between 0 and 1.
+  - Default: `1.0`
+
+#### Logging and Metrics:
+- **`verbose`**: `bool`
+  - Description: Flag for detailed output during training.
+  - Default: `False`
+
+- **`customMetric`**: `Optional[Callable]`
+  - Description: User-defined metric function for evaluation.
+  - Validation:
+    - Function must accept `y_true` and `y_pred` as the first two arguments.
+    - Must return a scalar value (int or float).
+    - Function execution is validated with dummy arguments.
+  - Default: `None`
+
+#### Custom Preprocessors:
+- **`customImputerNum`**: `Optional[Any]`
+  - Description: Custom numeric data imputer.
+  - Validation:
+    - Must be an object with `fit`, `transform`, and optionally `fit_transform` methods.
+    - Validated with dummy data.
+  - Default: `None`
+
+- **`customImputerCat`**: `Optional[Any]`
+  - Description: Custom categorical data imputer.
+  - Validation:
+    - Must be an object with `fit`, `transform`, and optionally `fit_transform` methods.
+    - Validated with dummy data.
+  - Default: `None`
+
+## Functions: 
+
+### **`fit`**
+```python
+fit(self, X, y, test_size=0.4, showTable=True)
+```
+Fits classification algorithms to `X` and `y` using a hold-out approach. Predicts and scores on a test set determined by `test_size`.
+
+#### Parameters:
+- **`X`**: Input features (DataFrame or compatible format).
+- **`y`**: Target labels (must be numeric, e.g., via `LabelEncoder` or `OrdinalEncoder`).
+- **`test_size`**: Proportion of the dataset to use as the test set. Default is `0.4`.
+- **`showTable`**: Display a table with results. Default is `True`.
+
+#### Behavior:
+- Validates the compatibility of input dimensions.
+- Automatically applies PCA transformation for incompatible dimensions.
+- Requires all categories to be present in training data.
+
+### **`repeated_cross_validation`**
+```python
+repeated_cross_validation(self, X, y, n_splits=10, n_repeats=5, showTable=True)
+```
+Performs repeated cross-validation on the dataset using the specified splits and repeats.
+
+#### Parameters:
+- **`X`**: Input features (DataFrame or compatible format).
+- **`y`**: Target labels (must be numeric).
+- **`n_splits`**: Number of folds for splitting the dataset. Default is `10`.
+- **`n_repeats`**: Number of times cross-validation is repeated. Default is `5`.
+- **`showTable`**: Display a table with results. Default is `True`.
+
+#### Behavior:
+- Uses `RepeatedStratifiedKFold` for generating splits.
+- Aggregates results from multiple train-test splits.
+
+### **`leave_one_out`**
+```python
+leave_one_out(self, X, y, showTable=True)
+```
+Performs leave-one-out cross-validation on the dataset.
+
+#### Parameters:
+- **`X`**: Input features (DataFrame or compatible format).
+- **`y`**: Target labels (must be numeric).
+- **`showTable`**: Display a table with results. Default is `True`.
+
+#### Behavior:
+- Uses `LeaveOneOut` for generating train-test splits.
+- Evaluates the model on each split and aggregates results.
+
+
 
