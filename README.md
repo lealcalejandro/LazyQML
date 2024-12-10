@@ -35,14 +35,14 @@ classifier = QuantumClassifier(nqubits={4}, classifiers={Model.QNN, Model.QSVM},
 classifier.fit(X=X, y=y, test_size=0.4)
 ```
 ### Output
-|    |   Qubits | Model      | Embedding     | Ansatz                     | Features   |   Time taken |   Accuracy |   Balanced Accuracy |   F1 Score |
-|---:|---------:|:-----------|:--------------|:---------------------------|:-----------|-------------:|-----------:|--------------------:|-----------:|
-|  0 |        4 | Model.QSVM | Embedding.RZ  |                            | ~          |     18.2478  |   0.966667 |            0.966667 |   0.966583 |
-|  1 |        4 | Model.QSVM | Embedding.RY  |                            | ~          |     13.8088  |   0.966667 |            0.966667 |   0.966583 |
-|  2 |        4 | Model.QSVM | Embedding.RX  |                            | ~          |     13.7079  |   0.966667 |            0.966667 |   0.966583 |
-|  3 |        4 | Model.QNN  | Embedding.RX  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.1699  |   0.933333 |            0.933333 |   0.932896 |
-|  4 |        4 | Model.QNN  | Embedding.RZ  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.7565  |   0.9      |            0.9      |   0.899206 |
-|  5 |        4 | Model.QNN  | Embedding.RY  | Ansatzs.HARDWARE_EFFICIENT | ~          |     11.8614  |   0.9      |            0.9      |   0.899948 |
+|   Qubits | Model      | Embedding     | Ansatz                     |   Time taken |   Accuracy |   Balanced Accuracy |   F1 Score |
+|---------:|:-----------|:--------------|:---------------------------|-------------:|-----------:|--------------------:|-----------:|
+|        4 | Model.QSVM | Embedding.RZ  |                            |     18.2478  |   0.966667 |            0.966667 |   0.966583 |
+|        4 | Model.QSVM | Embedding.RY  |                            |     13.8088  |   0.966667 |            0.966667 |   0.966583 |
+|        4 | Model.QSVM | Embedding.RX  |                            |     13.7079  |   0.966667 |            0.966667 |   0.966583 |
+|        4 | Model.QNN  | Embedding.RX  | Ansatzs.HARDWARE_EFFICIENT |     11.1699  |   0.933333 |            0.933333 |   0.932896 |
+|        4 | Model.QNN  | Embedding.RZ  | Ansatzs.HARDWARE_EFFICIENT |     11.7565  |   0.9      |            0.9      |   0.899206 |
+|        4 | Model.QNN  | Embedding.RY  | Ansatzs.HARDWARE_EFFICIENT |     11.8614  |   0.9      |            0.9      |   0.899948 |
 
 
 ## License & Compatibility
