@@ -1,17 +1,48 @@
 # LazyQML
 
 
-[![image](https://img.shields.io/pypi/v/lazyqml.svg)](https://pypi.python.org/pypi/lazyqml)
+[![image](https://img.shields.io/badge/pypi-%23ececec.svg?style=for-the-badge&logo=pypi&logoColor=1f73b7)](https://pypi.python.org/pypi/lazyqml)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) 
+![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![nVIDIA](https://img.shields.io/badge/cuda-000000.svg?style=for-the-badge&logo=nVIDIA&logoColor=green)
+<img src="https://assets.cloud.pennylane.ai/pennylane_website/generic/logo.svg" alt="Pennylane Logo" style="background-color: white; padding: 2px;" />
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 
+<!-- ![Pennylane](https://assets.cloud.pennylane.ai/pennylane_website/generic/logo.svg) -->
 
-**pLazyQML: A parallel package for efficient execution of QML models on classical computers**
+pLazyQML, a software package designed to accelerate, automate, and streamline experimentation with quantum machine learning models on classical computers. pLazyQML reduces the complexity and time required for developing and testing quantum-enhanced machine learning models.
+## Usage
+```python 
+from lazyqml.lazyqml import QuantumClassifier
+from lazyqml.Global.globalEnums import *
+from sklearn.datasets import load_breast_cancer, load_iris
+from sklearn.model_selection import train_test_split
+# Load data
+data = load_iris()
+X = data.data
+y = data.target
 
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.3,random_state =123)  
 
+# Initialize L azyClass ifier
+classifier = QuantumClassifier(nqubits={4,8,16},verbose=True,sequential=False,backend=Backend.lightningQubit)
+
+# Fit and predict
+classifier.fit(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test)
+```
+
+## License & Compatibility
 - Free software: MIT License
+- This Python package is only compatible with Linux systems.
+- Hardware acceleration is only enabled using CUDA-compatible devices. 
 ## Quantum and High Performance Computing (QHPC) - University of Oviedo    
 - José Ranilla Pastor - ranilla@uniovi.es
 - Elías Fernández Combarro - efernandezca@uniovi.es
-- Diego García Vega - garciavdiego@uniovi.es
+- Diego García Vega - diegogarciavega@gmail.com
 - Fernando Álvaro Plou Llorente - ploufernando@uniovi.es
 - Alejandro Leal Castaño - lealcalejandro@uniovi.es
 - Group - https://qhpc.uniovi.es
@@ -49,23 +80,4 @@
 
 - **leave_one_out** _(X, y, showTable=True)_: Perform leave-one-out cross-validation on the given dataset and model.        This method splits the dataset into multiple train-test splits using LeaveOneOut,
         fits the model on the training set, evaluates it on the validation set, and aggregates the results.
-## Usage:
-```python 
-from lazyqml.lazyqml import QuantumClassifier
-from lazyqml.Global.globalEnums import *
-from sklearn.datasets import load_breast_cancer, load_iris
-from sklearn.model_selection import train_test_split
-# Load data
-data = load_iris()
-X = data.data
-y = data.target
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.3,random_state =123)  
-
-# Initialize L azyClass ifier
-classifier = QuantumClassifier(nqubits={4,8,16},verbose=True,sequential=False,backend=Backend.lightningQubit)
-
-# Fit and predict
-classifier.fit(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test)
-```
