@@ -2,20 +2,17 @@ import inspect
 import warnings
 import numpy as np
 import pandas as pd
-import sys
 from tabulate import tabulate
 from pydantic import BaseModel, Field, model_validator, field_validator, ValidationError, conset
 from pydantic.config import ConfigDict
 from typing import List, Callable, Optional, Set
 from typing_extensions import Annotated, Set
-from Factories.Preprocessing.fPreprocessing import PreprocessingFactory
-from Global.globalEnums import *
-from Utils.Utils import *
-from Utils.Validator import *
-from Factories.Dispatchers.Dispatcher import *
-from sklearn.impute import SimpleImputer
-from ucimlrepo import fetch_ucirepo
-from sklearn.preprocessing import LabelEncoder
+from lazyqml.Factories.Preprocessing.fPreprocessing import PreprocessingFactory
+from lazyqml.Global.globalEnums import *
+from lazyqml.Utils.Utils import *
+from lazyqml.Utils.Validator import *
+from lazyqml.Factories.Dispatchers.Dispatcher import *
+
 from time import time
 
 class QuantumClassifier(BaseModel):
@@ -271,7 +268,7 @@ if __name__ == '__main__':
     repeats = 2
     embeddings = {Embedding.ZZ}
 
-    classifier = QuantumClassifier(nqubits={4}, classifiers={Model.QSVM,Model.QNN},embeddings={Embedding.RX,Embedding.RY,Embedding.RZ},ansatzs={Ansatzs.HARDWARE_EFFICIENT},sequential=Sequential,backend=Backend.lightningQubit,cores=cores,threshold=22,epochs=5)
+    classifier = QuantumClassifier(nqubits={4})
     
     start = time()
     
