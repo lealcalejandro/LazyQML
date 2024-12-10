@@ -1,6 +1,6 @@
 [project]
 name = "lazyqml"
-version = "3.0.5"
+version = "3.0.6"
 dynamic = [
     "dependencies",
 ]
@@ -48,7 +48,7 @@ universal = true
 
 
 [tool.bumpversion]
-current_version = "3.0.5"
+current_version = "3.0.6"
 commit = true
 tag = true
 
