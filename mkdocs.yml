@@ -40,7 +40,7 @@ plugins:
     - search
     - mkdocstrings
     - git-revision-date
-    
+
 markdown_extensions:
     - admonition
     - abbr
@@ -67,9 +67,9 @@ nav:
     - Contributing: contributing.md
     - FAQ: faq.md
     - Changelog: changelog.md
-    - Report Issues: https://github.com/DiegoGV-Uniovi/lazyqml/issues
+    - Report Issues: https://github.com/QHPC-SP-Research-Lab/LazyQML/issues
     - Examples:
         - examples/intro.ipynb
     - API Reference:
-          - lazyqml module: lazyqml.md
-          - common module: common.md
+        - lazyqml module: lazyqml.md
+

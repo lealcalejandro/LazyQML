@@ -1,4 +1,0 @@
- 
-# lazyqml module
-
-::: lazyqml.lazyqml
