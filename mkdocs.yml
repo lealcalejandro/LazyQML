@@ -64,12 +64,13 @@ nav:
     - Home: index.md
     - Installation: installation.md
     - Usage: usage.md
-    - Contributing: contributing.md
-    - FAQ: faq.md
-    - Changelog: changelog.md
+    # - Contributing: contributing.md
+    # - FAQ: faq.md
+    # - Changelog: changelog.md
     - Report Issues: https://github.com/QHPC-SP-Research-Lab/LazyQML/issues
     - Examples:
         - examples/intro.ipynb
     - API Reference:
-        - lazyqml module: lazyqml.md
+        - Introduction: api.md
+        - QuantumClassifier: lazyqml.md
 

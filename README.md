@@ -1,4 +1,4 @@
-![logo](https://github.com/QHPC-SP-Research-Lab/LazyQML/blob/main/docs/logo.jpg)
+![LazyQML](./docs/logo.jpg)
 ---
 [![Pypi](https://img.shields.io/badge/pypi-%23ececec.svg?style=for-the-badge&logo=pypi&logoColor=1f73b7)](https://pypi.python.org/pypi/lazyqml)
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) 
@@ -29,15 +29,15 @@ With LazyQML, you can:
 - Flexible & Modular: From basic quantum circuits to hybrid quantum-classical models—LazyQML has you covered.
 
 ## Documentation
-For detailed usage instructions, API reference, and code examples, please refer to the official LazyQML documentation.
+For detailed usage instructions, API reference, and code examples, please refer to the official LazyQML [documentation](https://qhpc-sp-research-lab.github.io/LazyQML/).
 
 ## Requirements
 
 - Python >= 3.10
 
-> [!CAUTION]
+> ❗❗ 
 > This library is only supported by Linux Systems. It doesn't support Windows nor MacOS. 
-
+> Only supports CUDA compatible devices.
 
 ## Installation
 To install lazyqml, run this command in your terminal:
