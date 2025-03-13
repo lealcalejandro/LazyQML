@@ -68,7 +68,10 @@ class Dispatcher:
         numProcs = psutil.cpu_count(logical=False)
         total_memory = calculate_free_memory()
         available_memory = total_memory
-        available_cores = numProcs
+        if not self.sequential:
+            available_cores = numProcs
+        else:
+            available_cores = 1
         
         # Lock para el acceso seguro a los recursos compartidos
         manager = Manager()
