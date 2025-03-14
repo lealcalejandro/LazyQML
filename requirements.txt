@@ -5,9 +5,9 @@ torchaudio
 torchvision
 scipy
 scikit-learn
-PennyLane
-PennyLane_Lightning
-PennyLane_Lightning_GPU
+PennyLane==0.39
+PennyLane_Lightning==0.39
+PennyLane_Lightning_GPU==0.39
 custatevec_cu12
 ucimlrepo 
 pydantic
