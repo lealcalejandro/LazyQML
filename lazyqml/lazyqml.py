@@ -213,8 +213,7 @@ class QuantumClassifier(BaseModel):
         # Fix seed
         fixSeed(self.randomstate)
         d = Dispatcher(sequential=self.sequential,threshold=self.threshold,repeats=1, folds=1)
-        d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat, X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="holdout",testsize=test_size)
-
+        d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat, X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="hold-out",testsize=test_size)
     def repeated_cross_validation(self, X, y, n_splits=10, n_repeats=5, showTable=True):
         """
         
