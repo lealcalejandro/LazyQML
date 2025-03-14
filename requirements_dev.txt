@@ -57,7 +57,7 @@ mkdocstrings
 mkdocs-git-revision-date-localized-plugin
 mkdocs-git-revision-date-plugin
 mkdocs-jupyter
-mkdocstrings_handlers
+# mkdocstrings_handlers
 wheel
 tabulate
 torch
@@ -69,8 +69,7 @@ PennyLane==0.39
 PennyLane_Lightning==0.39
 PennyLane_Lightning_GPU==0.39
 custatevec_cu12
-ucimlrepo 
+ucimlrepo
 pydantic
 psutil
 pandas
-gpu_queue
