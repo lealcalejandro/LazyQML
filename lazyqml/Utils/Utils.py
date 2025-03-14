@@ -92,12 +92,27 @@ def calculate_free_memory():
     free_ram_mb = mem.available / (1024 ** 2)  # Convert bytes to MiB
     return free_ram_mb
 
+# def calculate_free_video_memory():
+#     """
+#         Calculates the amount of free Video Memory
+#     """
+#     # Use psutil to get available system memory (in MiB)
+
+#     return GPUtil.getGPUs()[0].memoryFree
+
 def calculate_free_video_memory():
     """
-        Calculates the amount of free Video Memory
+    Calculates the amount of free Video Memory.
     """
-    # Use psutil to get available system memory (in MiB)
-    return GPUtil.getGPUs()[0].memoryFree
+    try:
+        gpus = GPUtil.getGPUs()
+        if not gpus:
+            raise ValueError("No GPUs found.")
+        return gpus[0].memoryFree
+    except Exception as e:
+        print(f"Error calculating free video memory: {e}")
+        return 0  # Return None or an appropriate default value
+
 
 
 def create_combinations(classifiers, embeddings, ansatzs, features, qubits, FoldID, RepeatID):

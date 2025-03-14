@@ -199,7 +199,7 @@ class QuantumClassifier(BaseModel):
 
     def fit(self, X, y, test_size=0.4, showTable=True):
         """
-        
+
         """
         warnings.filterwarnings("ignore")
         printer.set_verbose(verbose=self.verbose)
@@ -216,7 +216,7 @@ class QuantumClassifier(BaseModel):
         d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat, X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="hold-out",testsize=test_size)
     def repeated_cross_validation(self, X, y, n_splits=10, n_repeats=5, showTable=True):
         """
-        
+
         """
         warnings.filterwarnings("ignore")
         printer.set_verbose(verbose=self.verbose)
@@ -234,7 +234,7 @@ class QuantumClassifier(BaseModel):
 
     def leave_one_out(self, X, y, showTable=True):
         """
-        
+
         """
         warnings.filterwarnings("ignore")
         printer.set_verbose(verbose=self.verbose)
@@ -244,19 +244,19 @@ class QuantumClassifier(BaseModel):
             y=y
         )
         printer.print("Validation successful, fitting the model...")
-        
-        # Fix seed 
+
+        # Fix seed
         fixSeed(self.randomstate)
         d = Dispatcher(sequential=self.sequential,threshold=self.threshold,folds=len(X),repeats=1)
         d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat,X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="leave-one-out")
 
 
 if __name__ == '__main__':
-    Sequential = False
+    Sequential = True
     Node = "slave4"
     qubits = 4
     cores = 6
-
+    import time
     from sklearn.datasets import load_iris
 
     # Load data
@@ -267,9 +267,9 @@ if __name__ == '__main__':
     repeats = 2
     embeddings = {Embedding.ZZ}
 
-    classifier = QuantumClassifier(nqubits={4})
-    
-    start = time()
-    
-    classifier.repeated_cross_validation(X,y,n_splits=2,n_repeats=1)
-    print(f"TOTAL TIME: {time()-start}s\t PARALLEL: {not Sequential}")
+    classifier = QuantumClassifier(nqubits={4}, embeddings={Embedding.RX}, classifiers={Model.QNN}, ansatzs={Ansatzs.HARDWARE_EFFICIENT}, epochs=10, verbose=True, sequential=False, threshold=32)
+
+    # Fit and predict
+    start = time.time()
+    classifier.fit(X,y, test_size=0.4)
+    print(f"TOTAL TIME: {time.time()-start}s\t PARALLEL: {not Sequential}")
