@@ -176,7 +176,7 @@ def generate_cv_indices(X, y, mode="cross-validation", test_size=0.4, n_splits=5
     """
     cv_indices = {}
 
-    if mode == "hol-dout":
+    if mode == "hold-out":
         # Single train-test split for holdout
         train_idx, test_idx = train_test_split(
             np.arange(len(X)),
