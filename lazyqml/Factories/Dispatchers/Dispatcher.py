@@ -20,12 +20,13 @@ from collections import defaultdict
 from time import time, sleep
 
 class Dispatcher:
-    def __init__(self, sequential=False, threshold=22, time=True, folds=10, repeats=5):
+    def __init__(self, sequential=False, threshold=22, time=True, folds=10, repeats=5, cores=-1):
         self.sequential = sequential
         self.threshold = threshold
         self.timeM = time
         self.fold = folds
         self.repeat = repeats
+        self.cores = cores
 
     def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions,  customMetric):
         model = ModelFactory().getModel(**model_factory_params)
@@ -58,6 +59,7 @@ class Dispatcher:
                 item = queue.get_nowait()
 
                 results.append(self.execute_model(*item[1]))  # Store results if needed
+                print(self.execute_model(*item[1]))
             except queue.Empty:
                 break
 
@@ -69,7 +71,10 @@ class Dispatcher:
         total_memory = calculate_free_memory()
         available_memory = total_memory
         if not self.sequential:
-            available_cores = numProcs
+            if self.cores == -1:
+                available_cores = numProcs
+            else:
+                available_cores = self.cores
         else:
             available_cores = 1
 
@@ -143,7 +148,7 @@ class Dispatcher:
                 embeddings, features, learningRate, epochs, runs, batch,
                 maxSamples, verbose, customMetric, customImputerNum,
                 customImputerCat, X, y,
-                showTable=True, mode="cross-validation",testsize=0.4):
+                showTable=True, mode="cross-validation",testsize=0.4, cores=-1):
 
         """
         ################################################################################
@@ -269,6 +274,7 @@ class Dispatcher:
         Creating processes
         ################################################################################
         """
+        sleep(.001)
         executionTime = time()
         gpu_process = None
         # Start GPU process
