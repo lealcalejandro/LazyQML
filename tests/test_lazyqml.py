@@ -4,6 +4,15 @@
 
 import unittest
 
+def import_data():
+    from sklearn.datasets import load_iris
+
+    # Load data
+    data = load_iris()
+    X = data.data
+    y = data.target
+    return X, y
+
 class TestLazyqml(unittest.TestCase):
     """Tests for `lazyqml` package."""
 
@@ -13,7 +22,7 @@ class TestLazyqml(unittest.TestCase):
 
     def test_simulation_strings(self):
         # Verify getter/setter of simulation type flag
-        from lazyqml import lazyqml
+        import lazyqml
 
         sim = "statevector"
         lazyqml.set_simulation_type(sim)
@@ -31,6 +40,60 @@ class TestLazyqml(unittest.TestCase):
         sim = "tns"
         with self.assertRaises(ValueError):
             lazyqml.set_simulation_type(sim)
+
+    def test_bdim(self):
+        import lazyqml
+
+        # TODO: Desarrollar mas
+        lazyqml.get_max_bond_dim()
+
+    def test_basic_exec(self):
+        from lazyqml.lazyqml import QuantumClassifier
+        from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model
+
+        X, y = import_data()
+
+        qubits = 4
+        nqubits = {qubits}
+        embeddings = {Embedding.RX}
+        ansatzs = {Ansatzs.TWO_LOCAL}
+        models = {Model.QSVM}
+        layers = 2
+        verbose = False
+        sequential = False
+
+        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers,
+                            verbose=verbose, sequential=sequential)
+        
+        # if cores > 1: qc.repeated_cross_validation(X,y,n_splits=splits,n_repeats=repeats)
+        # else: qc.fit(X, y)
+        qc.fit(X, y)
+
+    def test_tensor(self):
+        from lazyqml.lazyqml import QuantumClassifier
+        from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model, Backend
+        import lazyqml
+
+        lazyqml.set_simulation_type("tensor")
+        assert lazyqml.get_simulation_type() == "tensor"
+
+        X, y = import_data()
+
+        qubits = 4
+        nqubits = {qubits}
+        embeddings = {Embedding.RX}
+        ansatzs = {Ansatzs.TWO_LOCAL}
+        models = {Model.QNN}
+        epochs = 2
+        layers = 2
+        verbose = True
+        sequential = False
+        backend = Backend.lightningTensor
+
+        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, epochs=epochs,
+                            verbose=verbose, sequential=sequential, backend=backend)
+        
+        qc.fit(X, y)
 
 if __name__ == '__main__':
     unittest.main()
