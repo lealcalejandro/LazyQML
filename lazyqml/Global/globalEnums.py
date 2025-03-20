@@ -37,5 +37,9 @@ class Model(BaseEnum):
 
 class Backend(Enum):
     defaultQubit = "default.qubit"
+    
     lightningQubit = "lightning.qubit"
     lightningGPU = "lightning.gpu"
+
+    defaultTensor = "default.tensor"
+    lightningTensor = "lightning.tensor"

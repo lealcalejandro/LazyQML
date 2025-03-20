@@ -8,6 +8,8 @@ from lazyqml.Interfaces.iCircuit import Circuit
 from lazyqml.Factories.Circuits.fCircuits import *
 from lazyqml.Global.globalEnums import Backend
 from lazyqml.Utils.Utils import printer
+import lazyqml
+
 import warnings
 
 class QNNTorch(Model):
@@ -23,7 +25,25 @@ class QNNTorch(Model):
         self.lr = lr
         self.batch_size = batch_size
         self.backend = backend
-        self.deviceQ = qml.device(backend.value, wires=nqubits, seed=seed) if backend != Backend.lightningGPU else qml.device(backend.value, wires=nqubits)
+
+        if lazyqml.get_simulation_type() == "tensor":
+            if backend != Backend.lightningTensor:
+                device_kwargs = {
+                    "max_bond_dim": lazyqml._max_bond_dim,
+                    "cutoff": np.finfo(np.complex128).eps,
+                    "contract": "auto-mps",
+                }
+            else:
+                device_kwargs = {
+                    "max_bond_dim": lazyqml._max_bond_dim,
+                    "cutoff": 1e-10,
+                    "cutoff_mode": "abs",
+                }
+                
+            self.deviceQ = qml.device(backend.value, wires=nqubits, method='mps', **device_kwargs)
+        else:
+            self.deviceQ = qml.device(backend.value, wires=nqubits, seed=seed)
+
         self.device = None
         self.params_per_layer = None
         self.circuit_factory = CircuitFactory(nqubits,nlayers=layers)
@@ -51,7 +71,7 @@ class QNNTorch(Model):
         
 
         # Define the quantum circuit as a PennyLane qnode
-        @qml.qnode(self.deviceQ, interface='torch', diff_method='adjoint')
+        @qml.qnode(self.deviceQ, interface='torch', diff_method='adjoint' if lazyqml.get_simulation_type() == "statevector" else 'best')
         def circuit(x, theta):
             
             embedding.getCircuit()(x, wires=range(self.nqubits))

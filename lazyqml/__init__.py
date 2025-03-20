@@ -11,7 +11,6 @@ _simulation = "statevector"
 def set_simulation_type(sim):
     try:
         assert sim == "statevector" or sim == "tensor"
-
         lazyqml._simulation = sim
 
     except Exception as e:
@@ -20,3 +19,12 @@ def set_simulation_type(sim):
 
 def get_simulation_type():
     return lazyqml._simulation
+
+# Max bond dimension getter/setter
+_max_bond_dim = 64
+
+def set_max_bond_dim(dim: int):
+    lazyqml._max_bond_dim = dim
+
+def get_max_bond_dim():
+    return lazyqml._max_bond_dim

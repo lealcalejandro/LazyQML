@@ -12,6 +12,7 @@ from lazyqml.Utils.Utils import *
 from lazyqml.Factories.Models.fModels import *
 from lazyqml.Factories.Preprocessing.fPreprocessing import *
 from lazyqml.Utils.Utils import printer
+import lazyqml
     # External Libraries
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
@@ -125,7 +126,9 @@ class Dispatcher:
 
                         # Filtramos los resultados None (errores) y los añadimos a results
                         # valid_results = [r for r in batch_results if r is not None]
+                        print("01")
                         results.extend(batch_results)
+                        print("02")
 
                     # Liberar recursos después del procesamiento
                     with resource_lock:
@@ -163,6 +166,8 @@ class Dispatcher:
         # Also keep track of items for printing
         cpu_items = []
         gpu_items = []
+
+        tensor_sim = lazyqml.get_simulation_type() == "tensor"
 
         RAM = calculate_free_memory()
         VRAM = calculate_free_video_memory()
@@ -257,12 +262,12 @@ class Dispatcher:
             }
 
             # When adding items to queues
-            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits):
-                model_factory_params["backend"] = Backend.lightningGPU
+            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits, lazyqml._max_bond_dim):
+                model_factory_params["backend"] = Backend.lightningGPU if not tensor_sim else Backend.lightningTensor
                 gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
                 gpu_items.append(combination)
             else:
-                model_factory_params["backend"] = Backend.lightningQubit
+                model_factory_params["backend"] = Backend.lightningQubit if not tensor_sim else Backend.defaultTensor
                 cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
                 cpu_items.append(combination)
 
@@ -304,6 +309,11 @@ class Dispatcher:
         for result in list(results):
             key = result[:5]
             grouped_results[key].append(result)
+
+        # For benchmarking/testing reasons
+        # for key, group in grouped_results.items():
+        #     for r in group:
+        #         print(r[5], r[11], r[12])
 
         summary = []
         cols = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score"]
