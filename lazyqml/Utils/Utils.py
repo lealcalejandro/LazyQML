@@ -9,6 +9,7 @@ import GPUtil
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
 from lazyqml.Global.globalEnums import *
 from itertools import product
+import lazyqml._config as config
 
 """
 ------------------------------------------------------------------------------------------------------------------
@@ -291,5 +292,25 @@ def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
     y_test = np.array(y_test)
 
     return X_train_processed, X_test_processed, y_train, y_test
+
+######
+def set_max_bond_dim(dim: int):
+    config._max_bond_dim = dim
+
+def get_max_bond_dim():
+    return config._max_bond_dim
+
+def set_simulation_type(sim):
+    try:
+        assert sim == "statevector" or sim == "tensor"
+        config._simulation = sim
+
+    except Exception as e:
+        raise ValueError(f"Simulation type must be \"statevector\" or \"tensor\". Got \"{sim}\"")
+    
+
+def get_simulation_type():
+    return config._simulation
+######
 
 printer = VerbosePrinter()

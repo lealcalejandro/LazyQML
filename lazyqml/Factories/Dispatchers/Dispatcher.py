@@ -11,8 +11,7 @@ import torch
 from lazyqml.Utils.Utils import *
 from lazyqml.Factories.Models.fModels import *
 from lazyqml.Factories.Preprocessing.fPreprocessing import *
-from lazyqml.Utils.Utils import printer
-import lazyqml
+from lazyqml.Utils import get_simulation_type, printer
     # External Libraries
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
@@ -167,7 +166,7 @@ class Dispatcher:
         cpu_items = []
         gpu_items = []
 
-        tensor_sim = lazyqml.get_simulation_type() == "tensor"
+        tensor_sim = get_simulation_type() == "tensor"
 
         RAM = calculate_free_memory()
         VRAM = calculate_free_video_memory()
@@ -262,7 +261,7 @@ class Dispatcher:
             }
 
             # When adding items to queues
-            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits, lazyqml._max_bond_dim):
+            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits):
                 model_factory_params["backend"] = Backend.lightningGPU if not tensor_sim else Backend.lightningTensor
                 gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
                 gpu_items.append(combination)
