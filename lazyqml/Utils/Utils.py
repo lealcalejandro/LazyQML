@@ -75,7 +75,10 @@ def calculate_quantum_memory(num_qubits, overhead=2):
     bytes_per_qubit_state = 16
 
     # Number of possible states is 2^n, where n is the number of qubits
-    num_states = 2 ** num_qubits
+    if get_simulation_type() == "statevector":
+        num_states = 2 ** num_qubits
+    else:
+        num_states =  num_qubits * (get_max_bond_dim() ** 2)
 
     # Total memory in bytes
     total_memory_bytes = num_states * bytes_per_qubit_state * overhead
