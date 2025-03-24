@@ -15,3 +15,4 @@ psutil
 pandas
 joblib
 gputil
+quimb
