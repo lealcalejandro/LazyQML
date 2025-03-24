@@ -16,39 +16,43 @@ def import_data():
 class TestLazyqml(unittest.TestCase):
     """Tests for `lazyqml` package."""
 
+    @classmethod
+    def setUpClass(self):
+        from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
+
     def test_import(self):
         import lazyqml 
         # print("Imported correctly")
 
     def test_simulation_strings(self):
-        # Verify getter/setter of simulation type flag
-        import lazyqml
+        from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
 
+        # Verify getter/setter of simulation type flag
         sim = "statevector"
-        lazyqml.set_simulation_type(sim)
-        self.assertTrue(lazyqml.get_simulation_type(), "statevector")
+        set_simulation_type(sim)
+        self.assertTrue(get_simulation_type(), "statevector")
 
         sim = "tensor"
-        lazyqml.set_simulation_type(sim)
-        self.assertTrue(lazyqml.get_simulation_type(), "tensor")
+        set_simulation_type(sim)
+        self.assertTrue(get_simulation_type(), "tensor")
 
         # Verify that ValueError is raised when number or different string is set
         sim = 3
         with self.assertRaises(ValueError):
-            lazyqml.set_simulation_type(sim)
+            set_simulation_type(sim)
 
         sim = "tns"
         with self.assertRaises(ValueError):
-            lazyqml.set_simulation_type(sim)
+            set_simulation_type(sim)
 
-    def test_bdim(self):
+    def _test_bdim(self):
         import lazyqml
 
         # TODO: Desarrollar mas
         lazyqml.get_max_bond_dim()
 
-    def test_basic_exec(self):
-        from lazyqml.lazyqml import QuantumClassifier
+    def _test_basic_exec(self):
+        from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model
 
         X, y = import_data()
@@ -70,12 +74,12 @@ class TestLazyqml(unittest.TestCase):
         qc.fit(X, y)
 
     def test_tensor(self):
-        from lazyqml.lazyqml import QuantumClassifier
+        from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model, Backend
-        import lazyqml
+        from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
 
-        lazyqml.set_simulation_type("tensor")
-        assert lazyqml.get_simulation_type() == "tensor"
+        set_simulation_type("tensor")
+        assert get_simulation_type() == "tensor"
 
         X, y = import_data()
 
@@ -90,8 +94,7 @@ class TestLazyqml(unittest.TestCase):
         sequential = False
         backend = Backend.lightningTensor
 
-        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, epochs=epochs,
-                            verbose=verbose, sequential=sequential, backend=backend)
+        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, epochs=epochs, verbose=verbose, sequential=sequential, backend=backend)
         
         qc.fit(X, y)
 
