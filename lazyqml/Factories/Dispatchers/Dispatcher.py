@@ -125,9 +125,7 @@ class Dispatcher:
 
                         # Filtramos los resultados None (errores) y los añadimos a results
                         # valid_results = [r for r in batch_results if r is not None]
-                        print("01")
                         results.extend(batch_results)
-                        print("02")
 
                     # Liberar recursos después del procesamiento
                     with resource_lock:
