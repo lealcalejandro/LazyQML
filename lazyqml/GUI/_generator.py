@@ -1,5 +1,7 @@
 from _layout import *
 
+import sys
+
 # Generate code function
 @output_code_display.capture(clear_output=True)
 def generate_code(button):
@@ -161,3 +163,17 @@ def generate_code(button):
     out_code.value = code_snippet
 
     return code_snippet
+
+
+class OSNotSupported(Exception):
+    """Raised when OS isnt linux"""
+
+# Save to .py file
+def save2file(button):
+    if sys.platform == 'linux':
+        code = generate_code(None)
+
+        with open("output.py", "w") as f:
+            f.write(code)
+    else:
+        raise OSNotSupported("OS not supported")

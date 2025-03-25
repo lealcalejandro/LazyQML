@@ -1,5 +1,5 @@
 from _widgets import *
-from _generator import generate_code
+from _generator import generate_code, save2file
 
 # Enable/disable widgets depending on CV/bagging options
 def on_change_cv(change):
@@ -15,12 +15,13 @@ def on_change_bag(change):
 def on_change_params(change):
     generate_code(None)
 
-# Trigger functions on events
+# Trigger code generation on events (change of parameters)
 def set_events():
     cv_checkbox.observe(on_change_cv, names='value')
     qnn_bag_checkbox.observe(on_change_bag, names='value')
 
     generate_code_button.on_click(generate_code)
+    save2file_button.on_click(save2file)
 
     for w in all_widgets:
         w.observe(on_change_params)

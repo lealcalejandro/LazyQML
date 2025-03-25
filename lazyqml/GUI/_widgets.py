@@ -92,13 +92,6 @@ repeats_widget = ipywidgets.IntText(
     disabled=not cv_checkbox.value
 )
 
-# # Classifier multi-selection using a Dropdown with multiple selection enabled
-# classifiers_options = ['qsvm', 'qnn', 'qnnbag']
-# classifiers_widget = widgets.SelectMultiple(
-#     options=classifiers_options, value=['qsvm'], description='Classifiers:',
-#     style={'description_width': '150px'}, layout=widgets.Layout(width='500px')
-# )
-
 # Models
 qsvm_checkbox = ipywidgets.Checkbox(
     **cb_default_parameters,
@@ -266,7 +259,16 @@ generate_code_button = ipywidgets.Button(
     description='Generate code',
     disabled=False,
     button_style='success', # 'success', 'info', 'warning', 'danger' or ''
-    icon='check' # (FontAwesome names without the `fa-` prefix)
+    icon='check', # (FontAwesome names without the `fa-` prefix)
+    layout=ipywidgets.Layout(width='50%')
+)
+
+save2file_button = ipywidgets.Button(
+    description='Save to .py file',
+    disabled=False,
+    button_style='info',
+    icon='download',
+    layout=ipywidgets.Layout(width='50%')
 )
 
 #############
