@@ -15,7 +15,7 @@ general_model_options_box = ipywidgets.VBox(
 
 cv_options_box = ipywidgets.VBox(
     [
-        ipywidgets.Label("Cross-Validation options"),
+        ipywidgets.Label("Cross-validation options"),
         cv_checkbox,
         splits_widget,
         repeats_widget
@@ -72,6 +72,7 @@ bagging_box = ipywidgets.VBox(
 other_options_box = ipywidgets.VBox(
     [
         ipywidgets.Label("Other options"),
+        tn_widget,
         runs_widget,
         randomstate_widget,
         verbose_widget

@@ -67,7 +67,7 @@ dataset_widget = ipywidgets.Dropdown(
 # Cross validation options
 cv_checkbox = ipywidgets.Checkbox(
     **cb_default_parameters,
-    description='Cross-Validation',
+    description='Use k-fold cross-validation',
 )
 
 splits_widget = ipywidgets.IntText(
@@ -75,7 +75,7 @@ splits_widget = ipywidgets.IntText(
     max=50, 
     step=1, 
     value=4, 
-    description="Splits",
+    description="Folds",
     indent=False,
     continuous_update=False,
     disabled=not cv_checkbox.value
@@ -179,9 +179,15 @@ ho_checkbox = ipywidgets.Checkbox(
 
 # Verbose switch
 verbose_widget = ipywidgets.Checkbox(
-    value=False, 
-    description="Verbose", 
-    indent=False
+    **cb_default_parameters, 
+    description="Verbose"
+)
+
+tn_widget = ipywidgets.Dropdown(
+    options=['State vector', 'Tensor Network (MPS)'],
+    value='State vector',
+    description='Sim. type',
+    disabled=False
 )
 
 # Number of samples as a percentage (from 0.0 to 1.0)
@@ -248,6 +254,7 @@ all_widgets = [
     dense_checkbox,
     ho_checkbox,
     verbose_widget,
+    tn_widget,
     nsamples_widget,
     nfeatures_widget,
     nestimators_widget

@@ -45,6 +45,9 @@ def generate_code(button):
     runs = runs_widget.value
     seed = randomstate_widget.value
     verbose = verbose_widget.value
+    sim = tn_widget.value
+
+    tn_sim = sim != 'State vector'
 
     selected_embeddings = []
     selected_ansatzs = []
@@ -133,6 +136,12 @@ def generate_code(button):
             "from lazyqml import QuantumClassifier"
         ]
     )
+
+    change_qbitrepr = ""
+    if tn_sim:
+        change_qbitrepr = "set_simulation_type('tensor')"
+
+        imports += f"\nfrom lazyqml.Utils import set_simulation_type\n\n{change_qbitrepr}"
 
     data_loading = "\n".join(
         [
