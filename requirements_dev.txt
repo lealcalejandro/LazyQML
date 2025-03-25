@@ -75,3 +75,4 @@ pydantic
 psutil
 pandas
 # gpu_queue
+ipykernel
