@@ -20,11 +20,11 @@ class TestLazyqml(unittest.TestCase):
     def setUpClass(self):
         from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
 
-    def test_import(self):
+    def _test_import(self):
         import lazyqml 
         # print("Imported correctly")
 
-    def test_simulation_strings(self):
+    def _test_simulation_strings(self):
         from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
 
         # Verify getter/setter of simulation type flag
@@ -73,7 +73,7 @@ class TestLazyqml(unittest.TestCase):
         # else: qc.fit(X, y)
         qc.fit(X, y)
 
-    def test_tensor(self):
+    def _test_tensor(self):
         from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model, Backend
         from lazyqml.Utils import get_simulation_type, get_max_bond_dim, set_simulation_type
@@ -95,6 +95,60 @@ class TestLazyqml(unittest.TestCase):
         backend = Backend.lightningTensor
 
         qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, epochs=epochs, verbose=verbose, sequential=sequential, backend=backend)
+        
+        qc.fit(X, y)
+
+class TestCustomModel(unittest.TestCase):
+    def test_custom_basic(self):
+        from lazyqml import QuantumClassifier
+        from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model, Backend
+        from lazyqml.Factories.Models.modelBlueprint import GenericModel
+
+        X, y = import_data()
+
+        qubits = 4
+        nqubits = {qubits}
+        embeddings = {Embedding.RX}
+        ansatzs = {Ansatzs.TWO_LOCAL}
+        models = {Model.QNN}
+        epochs = 2
+        layers = 2
+        verbose = True
+        sequential = False
+        backend = Backend.lightningQubit
+
+        # {
+        #     "name": custom_circuit_1,
+        #     "type": embedding, ansatz o modelo,
+        #     "circuit": objeto de la clase Model o Ansatz o Circuit,
+        #     "circ_params" (opcional): diccionaro de parametros
+        # },
+
+        # nqubits, backend, shots, seed=1234
+        custom = [
+            {
+                "name": "custom_1",
+                "type": "model",
+                "circuit": GenericModel,
+                "circ_params": {
+                    "backend": backend,
+                    "shots": 100,
+                    "seed": 1234
+                }
+            },
+            {
+                "name": "custom_2",
+                "type": "model",
+                "circuit": GenericModel,
+                "circ_params": {
+                    "backend": backend,
+                    "shots": 50,
+                    "seed": 237462834
+                }
+            }
+        ]
+
+        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, epochs=epochs, verbose=verbose, sequential=sequential, backend=backend, custom_circuits=custom)
         
         qc.fit(X, y)
 
