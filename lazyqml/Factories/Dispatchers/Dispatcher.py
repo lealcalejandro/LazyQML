@@ -1,9 +1,6 @@
 # Imports
 import numpy as np
 import pandas as pd
-import math
-import multiprocessing as mp
-import os
 import torch
 
 # Importing from
@@ -20,13 +17,33 @@ from collections import defaultdict
 from time import time, sleep
 
 class Dispatcher:
-    def __init__(self, sequential=False, threshold=22, time=True, folds=10, repeats=5, cores=-1):
+    def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, features, learningRate, epochs, runs, batch, maxSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1, custom_circuits=None):
         self.sequential = sequential
         self.threshold = threshold
         self.timeM = time
-        self.fold = folds
-        self.repeat = repeats
         self.cores = cores
+
+        self.nqubits = nqubits
+        self.randomstate = randomstate
+        self.shots = shots
+        self.numPredictors = numPredictors
+        self.numLayers = numLayers
+        self.classifiers = classifiers
+        self.ansatzs = ansatzs
+        self.backend = backend
+        self.embeddings = embeddings
+        self.features = features
+        self.learningRate = learningRate
+        self.epochs = epochs
+        self.batch = batch
+        self.maxSamples = maxSamples
+        self.customMetric = customMetric
+        self.customImputerNum = customImputerNum
+        self.customImputerCat = customImputerCat
+        self.predictions = predictions
+
+        self.custom_circuits = custom_circuits if custom_circuits else None
+
 
     def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions,  customMetric):
         model = ModelFactory().getModel(**model_factory_params)
@@ -49,7 +66,6 @@ class Dispatcher:
 
         return model_factory_params['Nqubits'], model_factory_params['model'], model_factory_params['Embedding'], model_factory_params['Ansatz'], model_factory_params['Max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
 
-
     def process_gpu_task(self, queue, results):
         torch.set_num_threads(1)
         torch.set_num_interop_threads(1)
@@ -62,7 +78,6 @@ class Dispatcher:
                 print(self.execute_model(*item[1]))
             except queue.Empty:
                 break
-
 
     def process_cpu_task(self,cpu_queue, gpu_queue, results):
         torch.set_num_interop_threads(1)
@@ -98,7 +113,7 @@ class Dispatcher:
                     try:
                         item = cpu_queue.get_nowait()
                         # printer.print(f"ITEM CPU: {item[0]}")
-                        _, _, _, _, _, _, _, mem_model = item[0]
+                        mem_model = item[0][-1]
 
                         # Verificar si hay recursos suficientes
                         with resource_lock:
@@ -131,7 +146,7 @@ class Dispatcher:
                     with resource_lock:
                         # printer.print("Freeing Up Resources")
                         for item in current_batch:
-                            _, _, _, _, _, _, _, mem_model = item[0]
+                            mem_model = item[0][-1]
                             available_memory += mem_model
                             available_cores += 1
                             # printer.print(f"Freed - Memory: {available_memory}MB, Cores: {available_cores}")
@@ -141,15 +156,14 @@ class Dispatcher:
 
             except Exception as e:
                 printer.print(f"Error in the batch: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 break
 
-    def dispatch(self, nqubits, randomstate, predictions, shots,
-                numPredictors, numLayers, classifiers, ansatzs, backend,
-                embeddings, features, learningRate, epochs, runs, batch,
-                maxSamples, verbose, customMetric, customImputerNum,
-                customImputerCat, X, y,
-                showTable=True, mode="cross-validation",testsize=0.4, cores=-1):
+    def prepare_custom_models():
+        pass
 
+    def dispatch(self, X, y, showTable, folds=10, repeats=5, mode="cross-validation", testsize=0.4):
         """
         ################################################################################
         Preparing Data Structures & Initializing Variables
@@ -177,9 +191,10 @@ class Dispatcher:
         cv_indices = generate_cv_indices(
             X, y,
             mode=mode,
-            n_splits=self.fold,
-            n_repeats=self.repeat,
-            random_state=randomstate
+            n_splits=folds,
+            n_repeats=repeats,
+            random_state=self.randomstate,
+            test_size=testsize
         )
 
 
@@ -190,18 +205,28 @@ class Dispatcher:
         """
 
         t_pre = time()
-        combinations = create_combinations(qubits=nqubits,
-                                        classifiers=classifiers,
-                                        embeddings=embeddings,
-                                        features=features,
-                                        ansatzs=ansatzs,
-                                        RepeatID=[i for i in range(self.repeat)],
-                                        FoldID=[i for i in range(self.fold)])
+        combinations = create_combinations(qubits=self.nqubits,
+                                        classifiers=self.classifiers,
+                                        embeddings=self.embeddings,
+                                        features=self.features,
+                                        ansatzs=self.ansatzs,
+                                        RepeatID=range(repeats),
+                                        FoldID=range(folds))
         cancelledQubits = set()
         to_remove = []
 
+        # TODO: Preparar combinaciones custom
+        custom_combinations = []
+        for c in self.custom_circuits:
+            # qubits, name, repeat, fold, circuit, model_params, memModel
+            temp_custom_combinations = list(product(list(self.nqubits), [c['name']], range(repeats), range(folds), [c['circuit']], [c['circ_params']]))
 
-        for i, combination in enumerate(combinations):
+            for t in temp_custom_combinations:
+                custom_combinations.append(t + (calculate_quantum_memory(t[0]),))
+
+        printer.print(str(custom_combinations))
+
+        for _, combination in enumerate(combinations):
             modelMem = combination[-1]
             if modelMem > RAM and modelMem > VRAM:
                 to_remove.append(combination)
@@ -232,8 +257,8 @@ class Dispatcher:
                 X,
                 y,
                 prepFactory,
-                customImputerCat,
-                customImputerNum,
+                self.customImputerCat,
+                self.customImputerNum,
                 train_idx,
                 test_idx,
                 ansatz=ansatz,
@@ -246,27 +271,70 @@ class Dispatcher:
                 "Embedding": embedding,
                 "Ansatz": ansatz,
                 "N_class": numClasses,
-                "backend": backend,
-                "Shots": shots,
-                "seed": randomstate*repeat,
-                "Layers": numLayers,
-                "Max_samples": maxSamples,
+                "backend": self.backend,
+                "Shots": self.shots,
+                "seed": self.randomstate*repeat,
+                "Layers": self.numLayers,
+                "Max_samples": self.maxSamples,
                 "Max_features": feature,
-                "LearningRate": learningRate,
-                "BatchSize": batch,
-                "Epoch": epochs,
-                "numPredictors": numPredictors
+                "LearningRate": self.learningRate,
+                "BatchSize": self.batch,
+                "Epoch": self.epochs,
+                "numPredictors": self.numPredictors
             }
 
             # When adding items to queues
-            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits):
+            if name == Model.QNN and qubits >= self.threshold and VRAM > memModel:
                 model_factory_params["backend"] = Backend.lightningGPU if not tensor_sim else Backend.lightningTensor
-                gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
+                gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
                 gpu_items.append(combination)
             else:
                 model_factory_params["backend"] = Backend.lightningQubit if not tensor_sim else Backend.defaultTensor
-                cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
+                cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
                 cpu_items.append(combination)
+
+        # TODO: Preparar ejecuciones de los modelos custom y añadir a las colas
+        for combination in custom_combinations:
+            qubits, name, repeat, fold, circuit, model_params, memModel = combination
+            feature = feature if feature is not None else "~"
+
+            # Get indices for this repeat/fold combination
+            train_idx, test_idx = get_train_test_split(cv_indices, repeat, fold)
+
+            numClasses = len(np.unique(y))
+            adjustedQubits = qubits  # or use adjustQubits if needed
+            prepFactory = PreprocessingFactory(adjustedQubits)
+
+            # Process data for this specific combination using pre-generated indices
+            X_train_processed, X_test_processed, y_train_processed, y_test_processed = dataProcessing(
+                X,
+                y,
+                prepFactory,
+                self.customImputerCat,
+                self.customImputerNum,
+                train_idx,
+                test_idx
+            )
+
+            model_factory_params = {
+                "Nqubits": adjustedQubits,
+                "Embedding": Embedding.ALL,
+                "Ansatz": Ansatzs.ALL,
+                "N_class": numClasses,
+                "Max_features": 10,
+                "model": name,
+                "custom_model": {
+                    "circuit": circuit,
+                    "circ_params": {"nqubits": adjustedQubits, **model_params}
+                }
+            }
+
+            printer.print(str(model_params))
+
+            # When adding items to queues
+            cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
+            cpu_items.append(combination)
+
 
         if self.timeM:
             printer.print(f"PREPROCESSING TIME: {time()-t_pre}")
@@ -319,7 +387,7 @@ class Dispatcher:
             accuracy = mean([r[6] for r in group])
             balanced_accuracy = mean([r[7] for r in group])
             f1_score = mean([r[8] for r in group])
-            if customMetric:
+            if self.customMetric:
                 if mode == "hold-out":
                     cols = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score", "Custom Metric", "Predictions"]
                     summary.append((key[0], key[1], key[2], key[3], key[4], time_taken, accuracy, balanced_accuracy, f1_score, custom_metric, []))
