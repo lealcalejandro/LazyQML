@@ -64,7 +64,7 @@ class Dispatcher:
 
         exeT = time() - start
 
-        return model_factory_params['Nqubits'], model_factory_params['model'], model_factory_params['Embedding'], model_factory_params['Ansatz'], model_factory_params['Max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
+        return model_factory_params['nqubits'], model_factory_params['model'], model_factory_params['embedding'], model_factory_params['ansatz'], model_factory_params['Max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
 
     def process_gpu_task(self, queue, results):
         torch.set_num_threads(1)
@@ -266,20 +266,20 @@ class Dispatcher:
             )
 
             model_factory_params = {
-                "Nqubits": adjustedQubits,
+                "nqubits": adjustedQubits,
                 "model": name,
-                "Embedding": embedding,
-                "Ansatz": ansatz,
-                "N_class": numClasses,
+                "embedding": embedding,
+                "ansatz": ansatz,
+                "n_class": numClasses,
                 "backend": self.backend,
-                "Shots": self.shots,
+                "shots": self.shots,
                 "seed": self.randomstate*repeat,
-                "Layers": self.numLayers,
+                "layers": self.numLayers,
                 "Max_samples": self.maxSamples,
                 "Max_features": feature,
-                "LearningRate": self.learningRate,
-                "BatchSize": self.batch,
-                "Epoch": self.epochs,
+                "lr": self.learningRate,
+                "batch_size": self.batch,
+                "epochs": self.epochs,
                 "numPredictors": self.numPredictors
             }
 
@@ -317,19 +317,24 @@ class Dispatcher:
             )
 
             model_factory_params = {
-                "Nqubits": adjustedQubits,
-                "Embedding": Embedding.ALL,
-                "Ansatz": Ansatzs.ALL,
-                "N_class": numClasses,
-                "Max_features": 10,
+                "nqubits": adjustedQubits,
+                "embedding": "~",
+                "ansatz": "~",
+                "n_class": numClasses,
+                "backend": self.backend,
+                "shots": self.shots,
+                "lr": self.learningRate,
+                "batch_size": self.batch,
+                "epochs": self.epochs,
+                "Max_features": "~",
                 "model": name,
                 "custom_model": {
                     "circuit": circuit,
-                    "circ_params": {"nqubits": adjustedQubits, **model_params}
+                    "circ_params": model_params
                 }
             }
 
-            printer.print(str(model_params))
+            # printer.print(str(model_params))
 
             # When adding items to queues
             cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))

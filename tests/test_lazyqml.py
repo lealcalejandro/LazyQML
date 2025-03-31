@@ -98,6 +98,26 @@ class TestLazyqml(unittest.TestCase):
         
         qc.fit(X, y)
 
+from lazyqml.Factories.Models import GradDescentModel
+import pennylane as qml
+class GDCustomModel(GradDescentModel):
+    # def __init__(self, kwargs):
+    #     super().__init__(**kwargs)
+
+    def trainable_circuit(self, x, theta):
+        qml.AngleEmbedding(x, wires=range(self.nqubits), rotation='Y')
+
+        param_count = 0
+        for _ in range(self.layers):
+            for i in range(self.nqubits):
+                qml.RY(theta[param_count], wires = i)
+                param_count += 1
+            for i in range(self.nqubits - 1):
+                qml.CNOT(wires = [i, i + 1])
+
+    def getTrainableParameters(self):
+        return self.layers*self.nqubits
+
 class TestCustomModel(unittest.TestCase):
     def test_custom_basic(self):
         from lazyqml import QuantumClassifier
@@ -111,8 +131,8 @@ class TestCustomModel(unittest.TestCase):
         embeddings = {Embedding.RX}
         ansatzs = {Ansatzs.TWO_LOCAL}
         models = {Model.QNN}
-        epochs = 2
-        layers = 2
+        epochs = 10
+        layers = 5
         verbose = True
         sequential = False
         backend = Backend.lightningQubit
@@ -123,27 +143,16 @@ class TestCustomModel(unittest.TestCase):
         #     "circuit": objeto de la clase Model o Ansatz o Circuit,
         #     "circ_params" (opcional): diccionaro de parametros
         # },
+        
+        # num_params, backend, n_class, epochs, shots, lr, batch_size
 
-        # nqubits, backend, shots, seed=1234
         custom = [
             {
                 "name": "custom_1",
                 "type": "model",
-                "circuit": GenericModel,
+                "circuit": GDCustomModel,
                 "circ_params": {
-                    "backend": backend,
-                    "shots": 100,
-                    "seed": 1234
-                }
-            },
-            {
-                "name": "custom_2",
-                "type": "model",
-                "circuit": GenericModel,
-                "circ_params": {
-                    "backend": backend,
-                    "shots": 50,
-                    "seed": 237462834
+                    "layers": layers + 1
                 }
             }
         ]

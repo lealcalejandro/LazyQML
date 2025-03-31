@@ -3,27 +3,28 @@ import pennylane as qml
 from time import time
 import numpy as np
 from lazyqml.Interfaces.iModel import Model
-from lazyqml.Interfaces.iAnsatz import Ansatz
-from lazyqml.Interfaces.iCircuit import Circuit
-from lazyqml.Factories.Circuits.fCircuits import *
 from lazyqml.Global.globalEnums import Backend
 from lazyqml.Utils import printer, get_simulation_type, get_max_bond_dim
 
+from abc import abstractmethod
+
 import warnings
 
-class QNNTorch(Model):
-    def __init__(self, nqubits, backend, ansatz, embedding, n_class, layers, epochs, shots, lr, batch_size, seed=1234) -> None:
+class GradDescentModel(Model):
+    def __init__(self, nqubits, backend, n_class, epochs, shots, lr, batch_size, seed=1234, **kwargs) -> None:
         super().__init__()
         self.nqubits = nqubits
-        self.ansatz = ansatz
-        self.shots = shots
-        self.embedding = embedding
+
+        self.__dict__.update(kwargs)
+
+        # Training hyperparams (not circuit related)
         self.n_class = n_class
-        self.layers = layers
         self.epochs = epochs
-        self.lr = lr
         self.batch_size = batch_size
         self.backend = backend
+        self.lr = lr
+        self.shots = shots
+        self.seed = seed
 
         if get_simulation_type() == "tensor":
             if backend != Backend.lightningTensor:
@@ -41,13 +42,13 @@ class QNNTorch(Model):
                 
             self.deviceQ = qml.device(backend.value, wires=nqubits, method='mps', **device_kwargs)
         else:
-            self.deviceQ = qml.device(backend.value, wires=nqubits, seed=seed)
+            self.deviceQ = qml.device(backend.value, wires=nqubits, seed=self.seed)
 
         self.device = None
-        self.params_per_layer = None
-        self.circuit_factory = CircuitFactory(nqubits,nlayers=layers)
-        self.qnn = None
+        self.circuit = None
         self.params = None
+        self.num_params = self.getTrainableParameters()
+
         self._build_circuit()
 
         # Suppress all warnings
@@ -60,39 +61,34 @@ class QNNTorch(Model):
         else:
             self.criterion = torch.nn.CrossEntropyLoss()
 
+    @abstractmethod
+    def trainable_circuit(self, x, theta, **kwargs) -> None:
+        pass
+
     def _build_circuit(self):
-        # Get the ansatz and embedding circuits from the factory
-        ansatz: Ansatz = self.circuit_factory.GetAnsatzCircuit(self.ansatz)
-        embedding: Circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
-
-        # Retrieve parameters per layer from the ansatz
-        self.params_per_layer = ansatz.getParameters()
-        
-
         # Define the quantum circuit as a PennyLane qnode
         @qml.qnode(self.deviceQ, interface='torch', diff_method='adjoint' if get_simulation_type() == "statevector" else 'best')
         def circuit(x, theta):
-            
-            embedding.getCircuit()(x, wires=range(self.nqubits))
-            
-            ansatz.getCircuit()(theta, wires=range(self.nqubits))
+
+            # Trainable part of the circuit
+            self.trainable_circuit(x, theta)
+
             if self.n_class==2:
                 return qml.expval(qml.PauliZ(0))
             else:
                 return [qml.expval(qml.PauliZ(wires=n)) for n in range(self.n_class)]
-            
 
-        self.qnn = circuit
+        self.circuit = circuit
 
     def forward(self, x, theta):
-        qnn_output = self.qnn(x, theta)
+        model_output = self.circuit(x, theta)
         if self.n_class == 2:
             #return (qnn_output + 1) / 2
-            return qnn_output.squeeze()
+            return model_output.squeeze()
         else:
             # If qnn_output is a list, apply the transformation to each element
             #return torch.tensor([(output + 1) / 2 for output in qnn_output])
-            return torch.stack([output for output in qnn_output]).T
+            return torch.stack([output for output in model_output]).T
         #return (self.qnn(x, theta) + 1)/2
 
     def fit(self, X, y):
@@ -110,9 +106,8 @@ class QNNTorch(Model):
 
 
         # Initialize parameters as torch tensors
-        num_params = int(self.layers * self.params_per_layer)
-        printer.print(f"\t\tInitializing {num_params} parameters")
-        self.params = torch.randn((num_params,), device=self.device, requires_grad=True)  # Ensure params are on the same device
+        printer.print(f"\t\tInitializing {self.num_params} parameters")
+        self.params = torch.randn((self.num_params,), device=self.device, requires_grad=True)  # Ensure params are on the same device
 
         # Define optimizer
         self.opt = torch.optim.Adam([self.params], lr=self.lr)
@@ -163,6 +158,16 @@ class QNNTorch(Model):
             # Return the class with the highest logit value
             return torch.argmax(y_pred, dim=1).cpu().numpy()  # Returns class indices
 
-    def getTrainableParameters(self):
-        print(self.params)
-        
+    def _predict(self, X):
+        # Convert test data to torch tensors
+        X_test = torch.tensor(X, dtype=torch.float32).to(self.device)
+        # Forward pass for prediction
+        y_pred = torch.stack([self.forward(x, self.params) for x in X_test])
+        # Apply softmax to get probabilities
+        y_pred = torch.softmax(y_pred, dim=1)
+        # Return the class with the highest probability
+        return torch.argmax(y_pred, dim=1).cpu().numpy()
+
+    @abstractmethod
+    def getTrainableParameters(self) -> int:
+        return 0
