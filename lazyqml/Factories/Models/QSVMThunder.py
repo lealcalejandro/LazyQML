@@ -1,17 +1,26 @@
 from lazyqml.Interfaces.iModel import Model
 import numpy as np
-from sklearn.svm import SVC
+# from sklearn.svm import SVC
 import pennylane as qml
 from lazyqml.Factories.Circuits.fCircuits import CircuitFactory
 from lazyqml.Utils.Utils import printer
 
-class QSVM(Model):
-    def __init__(self, nqubits, embedding, backend, shots, seed=1234):
+import thundersvm as tsvm
+
+# from importlib.machinery import SourceFileLoader
+# import pathlib
+# print(pathlib.Path(__file__).parent.resolve())
+# tsvm = SourceFileLoader("thundersvm", "/home/alejandrolc/QuantumSpain/Testing/thundersvm/python/thundersvm/thundersvm.py").load_module()
+
+# svc = svm.SVC(verbose=True)
+
+class QSVMThunder(Model):
+    def __init__(self, nqubits, embedding, backend, shots):
         super().__init__()
         self.nqubits = nqubits
         self.embedding = embedding
         self.shots = shots
-        self.device = qml.device(backend.value, wires=nqubits, seed=seed)
+        self.device = qml.device(backend.value, wires=nqubits)
         self.CircuitFactory = CircuitFactory(nqubits,nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
@@ -41,9 +50,9 @@ class QSVM(Model):
         self.X_train = X
         self.qkernel = self._quantum_kernel(X,X)
         # Train the classical SVM with the quantum kernel
-        printer.print("\t\tTraining the SVM...")
-        print("\t\tTraining the SVM...")
-        self.svm = SVC(kernel="precomputed")
+        printer.print("\t\tTraining the SVMThunder...")
+        print("\t\tTraining the SVMThunder...")
+        self.svm = tsvm.SVC(kernel="precomputed")
         self.svm.fit(self.qkernel, y)
         printer.print("\t\tSVM training complete.")
 

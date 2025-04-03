@@ -217,14 +217,15 @@ class Dispatcher:
 
         # TODO: Preparar combinaciones custom
         custom_combinations = []
-        for c in self.custom_circuits:
-            # qubits, name, repeat, fold, circuit, model_params, memModel
-            temp_custom_combinations = list(product(list(self.nqubits), [c['name']], range(repeats), range(folds), [c['circuit']], [c['circ_params']]))
+        if self.custom_circuits:
+            for c in self.custom_circuits:
+                # qubits, name, repeat, fold, circuit, model_params, memModel
+                temp_custom_combinations = list(product(list(self.nqubits), [c['name']], range(repeats), range(folds), [c['circuit']], [c['circ_params']]))
 
-            for t in temp_custom_combinations:
-                custom_combinations.append(t + (calculate_quantum_memory(t[0]),))
+                for t in temp_custom_combinations:
+                    custom_combinations.append(t + (calculate_quantum_memory(t[0]),))
 
-        printer.print(str(custom_combinations))
+        # printer.print(str(custom_combinations))
 
         for _, combination in enumerate(combinations):
             modelMem = combination[-1]
@@ -284,7 +285,7 @@ class Dispatcher:
             }
 
             # When adding items to queues
-            if name == Model.QNN and qubits >= self.threshold and VRAM > memModel:
+            if name == Model.QNN and qubits >= self.threshold and VRAM > memModel:# or name == Model.QSVMThunder:
                 model_factory_params["backend"] = Backend.lightningGPU if not tensor_sim else Backend.lightningTensor
                 gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
                 gpu_items.append(combination)

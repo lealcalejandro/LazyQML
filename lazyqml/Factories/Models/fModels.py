@@ -1,6 +1,7 @@
 from lazyqml.Factories.Models.QSVM import *
 from lazyqml.Factories.Models.QNNBag import *
 from lazyqml.Factories.Models.QNNTorch import *
+from lazyqml.Factories.Models.QSVMThunder import QSVMThunder
 from lazyqml.Global.globalEnums import *
 
 class ModelFactory:
@@ -11,8 +12,12 @@ class ModelFactory:
                  Max_samples=1.0, Max_features=1.0, lr=0.01, 
                  batch_size=8, epochs=50, seed=1234, backend=Backend.lightningQubit, numPredictors=10, custom_model=None):
         
+        # printer.print(model)
+        
         if model == Model.QSVM:
             return QSVM(nqubits=nqubits, embedding=embedding, shots=shots, seed=seed,backend=backend)
+        if model == Model.QSVMThunder:
+            return QSVMThunder(nqubits=nqubits, embedding=embedding, shots=shots, backend=backend)
         elif model == Model.QNN:
             return QNNTorch(nqubits=nqubits, ansatz=ansatz, 
                         embedding=embedding, n_class=n_class, 

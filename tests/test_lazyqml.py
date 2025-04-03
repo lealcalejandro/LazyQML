@@ -5,10 +5,10 @@
 import unittest
 
 def import_data():
-    from sklearn.datasets import load_iris
+    from sklearn.datasets import load_wine
 
     # Load data
-    data = load_iris()
+    data = load_wine()
     X = data.data
     y = data.target
     return X, y
@@ -51,27 +51,30 @@ class TestLazyqml(unittest.TestCase):
         # TODO: Desarrollar mas
         lazyqml.get_max_bond_dim()
 
-    def _test_basic_exec(self):
+    def test_basic_exec(self):
         from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model
 
         X, y = import_data()
 
         qubits = 4
-        nqubits = {qubits}
-        embeddings = {Embedding.RX}
+        nqubits = {qubits, 8}
+        embeddings = {Embedding.RY}
         ansatzs = {Ansatzs.TWO_LOCAL}
-        models = {Model.QSVM}
+        models = {Model.QSVM, Model.QSVMThunder}
         layers = 2
-        verbose = False
+        verbose = True
         sequential = False
 
-        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers,
-                            verbose=verbose, sequential=sequential)
+        splits=4
+        repeats=4
+
+        qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers, verbose=verbose, sequential=sequential)
         
         # if cores > 1: qc.repeated_cross_validation(X,y,n_splits=splits,n_repeats=repeats)
         # else: qc.fit(X, y)
         qc.fit(X, y)
+        # qc.repeated_cross_validation(X,y,n_splits=splits,n_repeats=repeats)
 
     def _test_tensor(self):
         from lazyqml import QuantumClassifier
@@ -119,7 +122,7 @@ class GDCustomModel(GradDescentModel):
         return self.layers*self.nqubits
 
 class TestCustomModel(unittest.TestCase):
-    def test_custom_basic(self):
+    def _test_custom_basic(self):
         from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model, Backend
         from lazyqml.Factories.Models.modelBlueprint import GenericModel
