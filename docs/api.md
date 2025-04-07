@@ -60,14 +60,14 @@ LazyQML gives you full control over your quantum model's architecture. With a ri
 Ansatz circuits define the structure of your quantum model. LazyQML provides a selection of ansatz types:
 
 - `ALL`: All available ansatz circuits.
-- `HCZRX`, `TREE_TENSOR`, `TWO_LOCAL`, `HARDWARE_EFFICIENT`: Popular ansatz circuits that are ideal for quantum machine learning.
+- `HCZRX`, `TREE_TENSOR`, `TWO_LOCAL`, `HARDWARE_EFFICIENT`, `ANNULAR`: Popular ansatz circuits that are ideal for quantum machine learning.
 
 #### ``Embeddings``
 Embeddings control how your classical data is encoded onto quantum states. LazyQML offers several types of embedding strategies:
 
 - `ALL`: All available embedding circuits.
 - `RX`, `RY`, `RZ`: Common qubit rotation embeddings.
-- `ZZ`, `AMP`: Embedding strategies based on entanglement or amplitude encoding.
+- `ZZ`, `AMP`, `DENSE_ANGLE`, `HIGHER_ORDER`: Embedding strategies based on entanglement or amplitude encoding.
 
 #### ``Model``
 LazyQML supports a variety of quantum models, each suited for different tasks. Choose the model that best fits your data and problem:
