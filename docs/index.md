@@ -47,9 +47,7 @@ To install lazyqml, run this command in your terminal:
 pip install lazyqml
 ```
 
-This is the preferred method to install lazyqml, as it will always install the most recent stable release.
-
-If you don't have [pip](https://pip.pypa.io) installed, this [Python installation guide](http://docs.python-guide.org/en/latest/starting/installation/) can guide you through the process.
+This is the preferred method to install lazyqml, as it will always install the most recent stable release. If you don't have [pip](https://pip.pypa.io) installed, this [Python installation guide](http://docs.python-guide.org/en/latest/starting/installation/) can guide you through the process.
 
 ### From sources
 
@@ -62,7 +60,7 @@ pip install git+https://github.com/QHPC-SP-Research-Lab/LazyQML
 
 ```python 
 from sklearn.datasets import load_iris
-from lazyqml.lazyqml import *
+from lazyqml import QuantumClassifier
 
 # Load data
 data = load_iris()
