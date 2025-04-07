@@ -27,7 +27,7 @@ Choosing the type of simulation is as simple as calling the `set_simulation_type
 We also offer methods to change the maximum bond dimension for the `'tensor'` representation, in order to fine-tune and provide more control of the resulting QML models.
 
 ```python
-from lazyqml import set_simulation_type, set_max_bond_dim
+from lazyqml.Utils import set_simulation_type, set_max_bond_dim
 
 # Use tensor network qubit representation
 set_simulation_type('tensor')
