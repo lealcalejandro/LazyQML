@@ -4,7 +4,7 @@ To use LazyQML:
 
 ```python 
 from sklearn.datasets import load_iris
-from lazyqml.lazyqml import *
+from lazyqml import QuantumClassifier
 
 # Load data
 data = load_iris()
