@@ -20,6 +20,23 @@ LazyQML provides **two variants** of the **QuantumClassifier**, depending on the
   
 - **Tensor Networks**: This variant uses tensor networks (MPS), providing higher scalability for larger quantum systems. It's optimized for more complex and larger datasets, helping you tackle big problems with ease.
 
+#### **Selecting QuantumClassifier variant**
+
+Choosing the type of simulation is as simple as calling the `set_simulation_type` method with the appropiate string: `'statevector'` for the state vector simulation and `'tensor'` for the tensor network variation.
+
+We also offer methods to change the maximum bond dimension for the `'tensor'` representation, in order to fine-tune and provide more control of the resulting QML models.
+
+```python
+from lazyqml import set_simulation_type, set_max_bond_dim
+
+# Use tensor network qubit representation
+set_simulation_type('tensor')
+set_max_bond_dim(32)
+
+# Use state vector qubit representation
+set_simulation_type('statevector')
+```
+
 <!-- #### Importing State Vector Simulation Variant:
 ```python
 from lazyqml.st import *
