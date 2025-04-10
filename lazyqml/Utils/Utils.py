@@ -117,8 +117,6 @@ def calculate_free_video_memory():
         print(f"Error calculating free video memory: {e}")
         return 0  # Return None or an appropriate default value
 
-
-
 def create_combinations(classifiers, embeddings, ansatzs, features, qubits, FoldID, RepeatID):
     classifier_list = []
     embedding_list = []
@@ -251,8 +249,6 @@ def get_train_test_split(cv_indices, repeat_id=0, fold_id=0):
 
     return indices['train_idx'], indices['test_idx']
 
-
-
 def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
                 train_idx, test_idx, ansatz=None, embedding=None):
     """
@@ -298,12 +294,28 @@ def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
 
 ######
 def set_max_bond_dim(dim: int):
+    """
+    Sets the maximum bond dimension for tensor network simulation.
+
+    Parameters
+    ----------
+    dim : int
+        Maximum bond dimension
+    """
     config._max_bond_dim = dim
 
 def get_max_bond_dim():
     return config._max_bond_dim
 
 def set_simulation_type(sim):
+    """
+    Sets the qubit representation for quantum circuit simulation.
+
+    Parameters
+    ----------
+    sim : str
+        String that represents the type of simulation. 'tensor' for tensor network simulation and 'statevector' for state vector simulation.
+    """
     try:
         assert sim == "statevector" or sim == "tensor"
         config._simulation = sim

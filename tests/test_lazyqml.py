@@ -51,7 +51,7 @@ class TestLazyqml(unittest.TestCase):
         # TODO: Desarrollar mas
         lazyqml.get_max_bond_dim()
 
-    def _test_basic_exec(self):
+    def test_basic_exec(self):
         from lazyqml import QuantumClassifier
         from lazyqml.Global.globalEnums import Embedding, Ansatzs, Model
 
@@ -59,15 +59,16 @@ class TestLazyqml(unittest.TestCase):
 
         qubits = 4
         nqubits = {qubits}
-        embeddings = {Embedding.RX}
-        ansatzs = {Ansatzs.TWO_LOCAL}
-        models = {Model.QSVM}
+        embeddings = {Embedding.DENSE_ANGLE, Embedding.HIGHER_ORDER, Embedding.RY}
+        ansatzs = {Ansatzs.ANNULAR, Ansatzs.TWO_LOCAL}
+        models = {Model.QNN}
         layers = 2
-        verbose = False
+        verbose = True
         sequential = False
+        epochs = 20
 
         qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers,
-                            verbose=verbose, sequential=sequential)
+                            verbose=verbose, sequential=sequential, epochs=epochs)
         
         # if cores > 1: qc.repeated_cross_validation(X,y,n_splits=splits,n_repeats=repeats)
         # else: qc.fit(X, y)

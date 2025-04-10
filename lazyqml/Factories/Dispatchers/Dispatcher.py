@@ -42,7 +42,7 @@ class Dispatcher:
         self.customImputerCat = customImputerCat
         self.predictions = predictions
 
-        self.custom_circuits = custom_circuits if custom_circuits else None
+        self.custom_circuits = custom_circuits if custom_circuits else []
 
 
     def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions,  customMetric):
