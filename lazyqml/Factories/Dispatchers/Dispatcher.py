@@ -1,18 +1,14 @@
-# Imports
-import numpy as np
-import pandas as pd
-import math
-import multiprocessing as mp
-import os
-import torch
-
 # Importing from
     # Internal Dependencies
-from lazyqml.Utils.Utils import *
-from lazyqml.Factories.Models.fModels import *
-from lazyqml.Factories.Preprocessing.fPreprocessing import *
-from lazyqml.Utils import get_simulation_type, printer
+from lazyqml.Utils import *
+from lazyqml.Factories.Models.fModels import ModelFactory
+from lazyqml.Factories.Preprocessing import PreprocessingFactory
+from lazyqml.Global.globalEnums import Model, Backend
     # External Libraries
+import numpy as np
+import pandas as pd
+import torch
+import psutil
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
 from statistics import mean
@@ -51,9 +47,6 @@ class Dispatcher:
 
 
     def process_gpu_task(self, queue, results):
-        torch.set_num_threads(1)
-        torch.set_num_interop_threads(1)
-
         while not queue.empty():
             try:
                 item = queue.get_nowait()
@@ -65,8 +58,6 @@ class Dispatcher:
 
 
     def process_cpu_task(self,cpu_queue, gpu_queue, results):
-        torch.set_num_interop_threads(1)
-        torch.set_num_threads(1)
         numProcs = psutil.cpu_count(logical=False)
         total_memory = calculate_free_memory()
         available_memory = total_memory
