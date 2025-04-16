@@ -11,7 +11,7 @@ class QSVM(Model):
         self.nqubits = nqubits
         self.embedding = embedding
         self.shots = shots
-        self.device = qml.device(backend.value, wires=nqubits, seed=seed)
+        self.device = qml.device(backend.value, wires=nqubits)
         self.CircuitFactory = CircuitFactory(nqubits,nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None

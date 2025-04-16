@@ -24,7 +24,7 @@ class Dispatcher:
         self.repeat = repeats
         self.cores = cores
 
-    def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions,  customMetric):
+    def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions, customMetric):
         model = ModelFactory().getModel(**model_factory_params)
         preds = []
         accuracy, b_accuracy, f1, custom = 0, 0, 0, 0
@@ -51,8 +51,10 @@ class Dispatcher:
             try:
                 item = queue.get_nowait()
 
-                results.append(self.execute_model(*item[1]))  # Store results if needed
-                print(self.execute_model(*item[1]))
+                partial_result = self.execute_model(*item[1])
+
+                results.append(partial_result)  # Store results if needed
+                printer.print(partial_result)
             except queue.Empty:
                 break
 

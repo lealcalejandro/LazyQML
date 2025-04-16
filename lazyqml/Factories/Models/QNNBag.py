@@ -27,7 +27,7 @@ class QNNBag(Model):
         self.max_features = max_features
         self.n_estimators = n_estimators
         self.backend = backend
-        self.deviceQ = qml.device(backend.value, wires=self.nqubits, seed=seed)
+        self.deviceQ = qml.device(backend.value, wires=self.nqubits)
         self.device = None
         self.params_per_layer = None
         self.circuit_factory = CircuitFactory(self.nqubits, nlayers=layers)

@@ -41,7 +41,7 @@ class QNNTorch(Model):
                 
             self.deviceQ = qml.device(backend.value, wires=nqubits, method='mps', **device_kwargs)
         else:
-            self.deviceQ = qml.device(backend.value, wires=nqubits, seed=seed)
+            self.deviceQ = qml.device(backend.value, wires=nqubits)
 
         self.device = None
         self.params_per_layer = None
