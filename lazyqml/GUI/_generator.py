@@ -73,35 +73,41 @@ def generate_code(button):
     if higher_order: selected_embeddings.append("Embedding.HIGHER_ORDER")
     if dense_angle: selected_embeddings.append("Embedding.DENSE_ANGLE")
 
-    selected_classifiers = "{" + ", ".join(selected_classifiers) + "}"
-    selected_ansatzs = "{" + ", ".join(selected_ansatzs) + "}"
-    selected_embeddings = "{" + ", ".join(selected_embeddings) + "}"
-
-    datasets = {
-        "Iris": "iris",
-        "Breast Cancer": "breast_cancer",
-        "Wine": "wine"
-    }
-
-    selected_dataset = datasets[dataset_ix]
-
     # Classifier parameters
     classifier_params = {
-        "nqubits": {qubits},
-        "classifiers": selected_classifiers,
-        "embeddings": selected_embeddings,
-        "epochs": epochs,
-        "randomstate": seed,
-        "runs": runs,
-        "verbose": verbose
+        "nqubits": {qubits}
     }
 
-    if qnn:
+    if selected_classifiers:
+        selected_classifiers = "{" + ", ".join(selected_classifiers) + "}"
+
         classifier_params = {
             **classifier_params,
-            "numLayers": layers,
-            "ansatzs": selected_ansatzs
+            "classifiers": selected_classifiers
         }
+
+    if selected_embeddings:
+        selected_embeddings = "{" + ", ".join(selected_embeddings) + "}"
+
+        classifier_params = {
+            **classifier_params,
+            "embeddings": selected_embeddings
+        }
+
+    if qnn:
+        if selected_ansatzs:
+            selected_ansatzs = "{" + ", ".join(selected_ansatzs) + "}"
+
+            classifier_params = {
+                **classifier_params,
+                "ansatzs": selected_ansatzs,
+                "numLayers": layers
+            }
+        else:
+            classifier_params = {
+                **classifier_params,
+                "numLayers": layers
+            }
 
     if qnn_bag:
         classifier_params = {
@@ -111,12 +117,21 @@ def generate_code(button):
             "features": features,
         }
 
+    # Rest of the parameters
+    classifier_params = {
+        **classifier_params,
+        "epochs": epochs,
+        "randomstate": seed,
+        "runs": runs,
+        "verbose": verbose
+    }
+
+    # Code snippet preparation
     fit_params = {
         "X": "X",
         "y": "y"
     }
 
-    # Code snippet preparation
     fit = ""
     if cv:
         fit_params["n_splits"] = splits
@@ -131,6 +146,15 @@ def generate_code(button):
         fit += f"{k}={v},"
 
     fit = fit[:-1] + ")"
+
+    # Dataset
+    datasets = {
+        "Iris": "iris",
+        "Breast Cancer": "breast_cancer",
+        "Wine": "wine"
+    }
+
+    selected_dataset = datasets[dataset_ix]
 
     imports = "\n".join(
         [
@@ -166,7 +190,7 @@ def generate_code(button):
 
 
 class OSNotSupported(Exception):
-    """Raised when OS isnt linux"""
+    """Raised when OS isn't linux"""
 
 # Save to .py file
 def save2file(button):

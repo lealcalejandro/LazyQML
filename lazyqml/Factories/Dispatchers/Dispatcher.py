@@ -1,20 +1,20 @@
-# Imports
+# Importing from
+    # Internal Dependencies
+from lazyqml.Utils import *
+from lazyqml.Factories.Models.fModels import ModelFactory
+from lazyqml.Factories.Preprocessing import PreprocessingFactory
+from lazyqml.Global.globalEnums import Model, Backend
+    # External Libraries
 import numpy as np
 import pandas as pd
 import torch
-
-# Importing from
-    # Internal Dependencies
-from lazyqml.Utils.Utils import *
-from lazyqml.Factories.Models.fModels import *
-from lazyqml.Factories.Preprocessing.fPreprocessing import *
-from lazyqml.Utils import get_simulation_type, printer
-    # External Libraries
+import psutil
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
 from statistics import mean
 from collections import defaultdict
 from time import time, sleep
+from itertools import product
 
 class Dispatcher:
     def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, features, learningRate, epochs, runs, batch, maxSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1, custom_circuits=None):
@@ -67,9 +67,6 @@ class Dispatcher:
         return model_factory_params['nqubits'], model_factory_params['model'], model_factory_params['embedding'], model_factory_params['ansatz'], model_factory_params['Max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
 
     def process_gpu_task(self, queue, results):
-        torch.set_num_threads(1)
-        torch.set_num_interop_threads(1)
-
         while not queue.empty():
             try:
                 item = queue.get_nowait()
@@ -80,8 +77,6 @@ class Dispatcher:
                 break
 
     def process_cpu_task(self,cpu_queue, gpu_queue, results):
-        torch.set_num_interop_threads(1)
-        torch.set_num_threads(1)
         numProcs = psutil.cpu_count(logical=False)
         total_memory = calculate_free_memory()
         available_memory = total_memory
@@ -156,8 +151,6 @@ class Dispatcher:
 
             except Exception as e:
                 printer.print(f"Error in the batch: {str(e)}")
-                import traceback
-                traceback.print_exc()
                 break
 
     def prepare_custom_models():

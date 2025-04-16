@@ -3,12 +3,12 @@ import warnings
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 from pydantic.config import ConfigDict
-from typing import List, Callable, Optional, Set
-from typing_extensions import Annotated, Set
+from typing import Callable, Optional, Set
+from typing_extensions import Annotated, Set, List
 from lazyqml.Global.globalEnums import *
 from lazyqml.Utils.Utils import *
 from lazyqml.Utils.Validator import *
-from lazyqml.Factories.Dispatchers.Dispatcher import *
+from lazyqml.Factories.Dispatchers import Dispatcher
 
 class QuantumClassifier(BaseModel):
     """

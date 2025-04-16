@@ -4,12 +4,12 @@ import numpy as np
 import torch
 import psutil
 import GPUtil
+from itertools import product
+from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
 
 # Importing from
-from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
 from lazyqml.Global.globalEnums import *
-from itertools import product
-import lazyqml._config as config
+import lazyqml.Global._config as cfg
 
 """
 ------------------------------------------------------------------------------------------------------------------
@@ -302,10 +302,10 @@ def set_max_bond_dim(dim: int):
     dim : int
         Maximum bond dimension
     """
-    config._max_bond_dim = dim
+    cfg._max_bond_dim = dim
 
 def get_max_bond_dim():
-    return config._max_bond_dim
+    return cfg._max_bond_dim
 
 def set_simulation_type(sim):
     """
@@ -318,14 +318,14 @@ def set_simulation_type(sim):
     """
     try:
         assert sim == "statevector" or sim == "tensor"
-        config._simulation = sim
+        cfg._simulation = sim
 
     except Exception as e:
         raise ValueError(f"Simulation type must be \"statevector\" or \"tensor\". Got \"{sim}\"")
     
 
 def get_simulation_type():
-    return config._simulation
+    return cfg._simulation
 ######
 
 printer = VerbosePrinter()
