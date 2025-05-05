@@ -91,7 +91,7 @@ class Dispatcher:
                     try:
                         item = cpu_queue.get_nowait()
                         # printer.print(f"ITEM CPU: {item[0]}")
-                        _, _, _, _, _, _, _, mem_model = item[0]
+                        mem_model = item[0][-1]
 
                         # Verificar si hay recursos suficientes
                         with resource_lock:
@@ -124,7 +124,7 @@ class Dispatcher:
                     with resource_lock:
                         # printer.print("Freeing Up Resources")
                         for item in current_batch:
-                            _, _, _, _, _, _, _, mem_model = item[0]
+                            mem_model = item[0][-1]
                             available_memory += mem_model
                             available_cores += 1
                             # printer.print(f"Freed - Memory: {available_memory}MB, Cores: {available_cores}")
@@ -134,6 +134,8 @@ class Dispatcher:
 
             except Exception as e:
                 printer.print(f"Error in the batch: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 break
 
     def dispatch(self, nqubits, randomstate, predictions, shots,
@@ -172,7 +174,8 @@ class Dispatcher:
             mode=mode,
             n_splits=self.fold,
             n_repeats=self.repeat,
-            random_state=randomstate
+            random_state=randomstate,
+            test_size=testsize
         )
 
 

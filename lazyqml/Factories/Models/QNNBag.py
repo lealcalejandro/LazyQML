@@ -148,3 +148,6 @@ class QNNBag(Model):
             return (torch.sigmoid(y_predictions.detach()).cpu().numpy() > 0.5).astype(int)  # Convert to binary predictions
         else:
             return torch.argmax(y_predictions.detach(), dim=1).cpu().numpy()  # For multi-class predictions
+        
+    def getTrainableParameters(self):
+        return self.n_estimators * int(self.layers * self.ansatz.getParameters())

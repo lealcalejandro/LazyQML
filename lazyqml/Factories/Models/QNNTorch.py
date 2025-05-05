@@ -162,17 +162,5 @@ class QNNTorch(Model):
             # Return the class with the highest logit value
             return torch.argmax(y_pred, dim=1).cpu().numpy()  # Returns class indices
 
-    def _predict(self, X):
-        
-        # Convert test data to torch tensors
-        X_test = torch.tensor(X, dtype=torch.float32).to(self.device)
-        # Forward pass for prediction
-        y_pred = torch.stack([self.forward(x, self.params) for x in X_test])
-        # Apply softmax to get probabilities
-        y_pred = torch.softmax(y_pred, dim=1)
-        # Return the class with the highest probability
-        return torch.argmax(y_pred, dim=1).cpu().numpy()
-
     def getTrainableParameters(self):
         print(self.params)
-        

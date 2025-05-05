@@ -5,6 +5,8 @@ import pennylane as qml
 from lazyqml.Factories.Circuits.fCircuits import CircuitFactory
 from lazyqml.Utils.Utils import printer
 
+from functools import partial
+
 class QSVM(Model):
     def __init__(self, nqubits, embedding, backend, shots, seed=1234):
         super().__init__()
@@ -16,7 +18,14 @@ class QSVM(Model):
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
         self.X_train = None
-        
+
+        # Slower
+        # self.batch_kernel_circ = partial(qml.batch_input, argnum=0)(self.kernel_circ)
+        # self.batch_kernel_circ = partial(qml.batch_input, argnum=1)(self.batch_kernel_circ)
+
+        # Faster batching
+        self.batch_kernel_circ = partial(qml.batch_input, argnum=1)(self.kernel_circ)
+
     def _build_kernel(self):
         """Build the quantum kernel using a given embedding and ansatz."""
         # Get the embedding circuit from the circuit factory
@@ -35,7 +44,9 @@ class QSVM(Model):
     def _quantum_kernel(self, X1, X2):
         """Calculate the quantum kernel matrix for SVM."""
 
-        return np.array([[self.kernel_circ(x1, x2)[0] for x2 in X2]for x1 in X1])
+        return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
+        return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
+        # return np.array(self.batch_kernel_circ(X1, X2))[..., 0]
 
     def fit(self, X, y):
         self.X_train = X
@@ -51,7 +62,6 @@ class QSVM(Model):
             if self.X_train is None:
                 raise ValueError("Model has not been fitted. Call fit() before predict().")
             
-        
             printer.print(f"\t\t\tComputing kernel between test and training data...")
             
             # Compute kernel between test data and training data
@@ -64,5 +74,6 @@ class QSVM(Model):
         except Exception as e:
             printer.print(f"Error during prediction: {str(e)}")
             raise
+
     def getTrainableParameters(self):
         return "~"
