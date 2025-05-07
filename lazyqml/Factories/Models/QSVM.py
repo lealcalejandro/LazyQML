@@ -44,7 +44,7 @@ class QSVM(Model):
     def _quantum_kernel(self, X1, X2):
         """Calculate the quantum kernel matrix for SVM."""
 
-        return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
+        # return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
         return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
         # return np.array(self.batch_kernel_circ(X1, X2))[..., 0]
 
