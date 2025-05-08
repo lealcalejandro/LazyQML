@@ -1,13 +1,11 @@
 # Importing from
     # Internal Dependencies
 from lazyqml.Utils import *
-from lazyqml.Factories.Models.fModels import ModelFactory
-from lazyqml.Factories.Preprocessing import PreprocessingFactory
+from lazyqml.Factories import ModelFactory, PreprocessingFactory
 from lazyqml.Global.globalEnums import Model, Backend
     # External Libraries
 import numpy as np
 import pandas as pd
-import torch
 import psutil
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager

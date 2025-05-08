@@ -8,7 +8,7 @@ from typing_extensions import Annotated, Set, List
 from lazyqml.Global.globalEnums import *
 from lazyqml.Utils.Utils import *
 from lazyqml.Utils.Validator import *
-from lazyqml.Factories.Dispatchers import Dispatcher
+from lazyqml.Dispatchers import Dispatcher
 
 class QuantumClassifier(BaseModel):
     """

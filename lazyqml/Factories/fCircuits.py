@@ -1,7 +1,7 @@
 # Importing Enums
 from lazyqml.Global.globalEnums import Ansatzs, Embedding
 # Importing Circuits
-from lazyqml.Factories.Circuits import *
+from lazyqml.Circuits import *
 
 class CircuitFactory:
     def __init__(self, nqubits, nlayers) -> None:

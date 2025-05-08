@@ -5,7 +5,7 @@ import numpy as np
 from lazyqml.Interfaces.iModel import Model
 from lazyqml.Interfaces.iAnsatz import Ansatz
 from lazyqml.Interfaces.iCircuit import Circuit
-from lazyqml.Factories.Circuits.fCircuits import *
+from lazyqml.Factories import CircuitFactory
 from lazyqml.Global.globalEnums import Backend
 from lazyqml.Utils.Utils import printer
 import warnings

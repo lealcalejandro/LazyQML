@@ -2,7 +2,7 @@ import pennylane as qml
 from sklearn.neighbors import KNeighborsClassifier
 
 from lazyqml.Interfaces import Model
-from lazyqml.Factories.Circuits.fCircuits import CircuitFactory
+from lazyqml.Factories import CircuitFactory
 from lazyqml.Utils import printer
 
 

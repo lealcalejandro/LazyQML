@@ -14,7 +14,4 @@ from .TreeTensor import TreeTensor
 from .TwoLocal import TwoLocal
 from .Annular import Annular
 
-# Factory
-from .fCircuits import CircuitFactory
-
-__all__ = ['CircuitFactory', 'RxEmbedding', 'RyEmbedding', 'RzEmbedding', 'ZzEmbedding', 'AmplitudeEmbedding', 'DenseAngleEmbedding', 'HigherOrderEmbedding', 'HardwareEfficient', 'HCzRx', 'TreeTensor', 'TwoLocal', 'Annular']
+__all__ = ['RxEmbedding', 'RyEmbedding', 'RzEmbedding', 'ZzEmbedding', 'AmplitudeEmbedding', 'DenseAngleEmbedding', 'HigherOrderEmbedding', 'HardwareEfficient', 'HCzRx', 'TreeTensor', 'TwoLocal', 'Annular']
