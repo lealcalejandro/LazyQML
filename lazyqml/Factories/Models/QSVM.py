@@ -2,7 +2,7 @@ from lazyqml.Interfaces.iModel import Model
 import numpy as np
 from sklearn.svm import SVC
 import pennylane as qml
-from lazyqml.Factories.Circuits.fCircuits import CircuitFactory
+from lazyqml.Factories.Circuits import CircuitFactory
 from lazyqml.Utils.Utils import printer
 
 from functools import partial
@@ -14,7 +14,7 @@ class QSVM(Model):
         self.embedding = embedding
         self.shots = shots
         self.device = qml.device(backend.value, wires=nqubits)
-        self.CircuitFactory = CircuitFactory(nqubits,nlayers=0)
+        self.CircuitFactory = CircuitFactory(nqubits, nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
         self.X_train = None

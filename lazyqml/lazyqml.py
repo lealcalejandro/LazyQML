@@ -4,7 +4,7 @@ import numpy as np
 from pydantic import BaseModel, Field, field_validator
 from pydantic.config import ConfigDict
 from typing import Callable, Optional, Set
-from typing_extensions import Annotated, Set
+from typing_extensions import Annotated, Set, List
 from lazyqml.Global.globalEnums import *
 from lazyqml.Utils.Utils import *
 from lazyqml.Utils.Validator import *
@@ -92,9 +92,11 @@ class QuantumClassifier(BaseModel):
     customImputerNum: Optional[Any] = None
     customImputerCat: Optional[Any] = None
     cores: Optional[int] = -1
+    _dispatcher: Any = None
 
     @field_validator('nqubits', mode='before')
     def check_nqubits_positive(cls, value):
+        # TODO: Funciona aunque el set no sea de enteros?
         if not isinstance(value, set):
             raise TypeError('nqubits must be a set of integers')
 
@@ -184,6 +186,46 @@ class QuantumClassifier(BaseModel):
 
         return preprocessor
 
+    def model_post_init(self, ctx):
+        self._dispatcher = Dispatcher(
+            sequential=self.sequential,
+            threshold=self.threshold,
+            cores=self.cores,
+            randomstate=self.randomstate,
+            nqubits=self.nqubits,
+            predictions=self.predictions,
+            numPredictors=self.numPredictors,
+            numLayers=self.numLayers,
+            classifiers=self.classifiers,
+            ansatzs=self.ansatzs,
+            backend=self.backend,
+            embeddings=self.embeddings,
+            features=self.features,
+            learningRate=self.learningRate,
+            epochs=self.epochs,
+            runs=self.runs,
+            maxSamples=self.maxSamples,
+            customMetric=self.customMetric,
+            customImputerNum=self.customImputerNum,
+            customImputerCat=self.customImputerCat,
+            shots=self.shots,
+            batch=self.batchSize
+        )
+
+
+    def _prepare_execution(self, X, y):
+        warnings.filterwarnings("ignore")
+        printer.set_verbose(verbose=self.verbose)
+        # Validation model to ensure input parameters are DataFrames and sizes match
+        FitParamsValidatorCV(
+            x=X,
+            y=y
+        )
+        printer.print("Validation successful, fitting the model...")
+
+        # Fix seed
+        fixSeed(self.randomstate)
+
     def fit(self, X, y, test_size=0.4, showTable=True):
         """
         Main method of the QuantumClassifier class. Divides the input dataset in train and test according to the test_size parameter, creates and builds all the quantum models using the previously introduced parameters and trains them using X as training datapoints and y as target tags. 
@@ -199,22 +241,21 @@ class QuantumClassifier(BaseModel):
         showTable : bool, optional (default=True)
             If True, prints the table of results and accuracies in the terminal.
         """
-        warnings.filterwarnings("ignore")
-        printer.set_verbose(verbose=self.verbose)
-        # Validation model to ensure input parameters are DataFrames and sizes match
-        FitParamsValidatorCV(
-            x=X,
-            y=y
-        )
-        printer.print("Validation successful, fitting the model...")
 
-        # Fix seed
-        fixSeed(self.randomstate)
-        d = Dispatcher(sequential=self.sequential,threshold=self.threshold,repeats=1, folds=1, cores=self.cores)
-        scores = d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat, X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="hold-out",testsize=test_size)
+        self._prepare_execution(X, y)
 
+        scores = self._dispatcher.dispatch(
+                        X=X,
+                        y=y,
+                        folds=1,
+                        repeats=1,
+                        mode="hold-out",
+                        testsize=test_size,
+                        showTable=showTable
+                    )
+        
         return scores
-
+    
     def repeated_cross_validation(self, X, y, n_splits=10, n_repeats=5, showTable=True):
         """
         Carries out k-fold cross validation based on n_splits (folds) and n_repeats (repeats). 
@@ -232,22 +273,19 @@ class QuantumClassifier(BaseModel):
         showTable : bool, optional (default=True)
             If True, prints the table of results and accuracies in the terminal.
         """
-        warnings.filterwarnings("ignore")
-        printer.set_verbose(verbose=self.verbose)
-        # Validation model to ensure input parameters are DataFrames and sizes match
-        FitParamsValidatorCV(
-            x=X,
-            y=y
-        )
-        printer.print("Validation successful, fitting the model...")
+        self._prepare_execution(X, y)
 
-        # Fix seed
-        fixSeed(self.randomstate)
-        d = Dispatcher(sequential=self.sequential,threshold=self.threshold,repeats=n_repeats,folds=n_splits, cores=self.cores)
-        scores = d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat,X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="cross-validation", cores=self.cores)
-
+        scores = self._dispatcher.dispatch(
+                        X=X,
+                        y=y,
+                        folds=n_splits,
+                        repeats=n_repeats,
+                        mode="cross-validation",
+                        showTable=showTable
+                    )
+        
         return scores
-    
+
     def leave_one_out(self, X, y, showTable=True):
         """
         Similar method to repeated_cross_validation. Carries out leave-one-out cross validation. Equivalent to repeated_cross_validation using n_splits=len(X) and n_repeats=1. 
@@ -265,18 +303,18 @@ class QuantumClassifier(BaseModel):
         showTable : bool, optional (default=True)
             If True, prints the table of results and accuracies in the terminal.
         """
-        warnings.filterwarnings("ignore")
-        printer.set_verbose(verbose=self.verbose)
-        # Validation model to ensure input parameters are DataFrames and sizes match
-        FitParamsValidatorCV(
-            x=X,
-            y=y
-        )
-        printer.print("Validation successful, fitting the model...")
+        self._prepare_execution(X, y)
 
-        # Fix seed
-        fixSeed(self.randomstate)
-        d = Dispatcher(sequential=self.sequential,threshold=self.threshold,folds=len(X),repeats=1,cores=self.cores)
-        scores = d.dispatch(nqubits=self.nqubits,randomstate=self.randomstate,predictions=self.predictions,numPredictors=self.numPredictors,numLayers=self.numLayers,classifiers=self.classifiers,ansatzs=self.ansatzs,backend=self.backend,embeddings=self.embeddings,features=self.features,learningRate=self.learningRate,epochs=self.epochs,runs=self.runs,maxSamples=self.maxSamples,verbose=self.verbose,customMetric=self.customMetric,customImputerNum=self.customImputerNum,customImputerCat=self.customImputerCat,X=X ,y=y,shots=self.shots,showTable=showTable,batch=self.batchSize,mode="leave-one-out", cores=self.cores)
+        scores = self._dispatcher.dispatch(
+                        X=X,
+                        y=y,
+                        folds=len(X),
+                        repeats=1,
+                        mode="leave-one-out",
+                        showTable=showTable
+                    )
+
+        # No funcionaria porque hay que poner el modo dentro del dispatch
+        # self.repeated_cross_validation(X, y, len(X), 1, showTable)
 
         return scores

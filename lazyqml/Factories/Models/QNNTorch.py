@@ -45,7 +45,7 @@ class QNNTorch(Model):
 
         self.device = None
         self.params_per_layer = None
-        self.circuit_factory = CircuitFactory(nqubits,nlayers=layers)
+        self.circuit_factory = CircuitFactory(nqubits, nlayers=layers)
         self.qnn = None
         self.params = None
         self._build_circuit()

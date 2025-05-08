@@ -3,17 +3,16 @@ from lazyqml.Global.globalEnums import Ansatzs, Embedding
 # Importing Circuits
 from lazyqml.Factories.Circuits import *
 
-
 class CircuitFactory:
-    def __init__(self, Nqubits, nlayers) -> None:
-        self.nqubits = Nqubits 
+    def __init__(self, nqubits, nlayers) -> None:
+        self.nqubits = nqubits 
         self.nlayers = nlayers
 
     def GetAnsatzCircuit(self,ansatz):
         if ansatz == Ansatzs.HARDWARE_EFFICIENT:
-            return HardwareEfficient(self.nqubits,self.nlayers)
+            return HardwareEfficient(self.nqubits, self.nlayers)
         elif ansatz == Ansatzs.HCZRX:
-            return HCzRx(self.nqubits,self.nlayers)
+            return HCzRx(self.nqubits, self.nlayers)
         elif ansatz == Ansatzs.TREE_TENSOR:
             return TreeTensor(self.nqubits, nlayers=self.nlayers)
         elif ansatz == Ansatzs.TWO_LOCAL:
@@ -36,11 +35,3 @@ class CircuitFactory:
             return DenseAngleEmbedding()
         elif embedding == Embedding.HIGHER_ORDER:
             return HigherOrderEmbedding()
-
-    def GetKernelCircuit(self,embedding):
-        pass
-        
-    
-    def GetCircuit(self,embedding, ansatz):
-        pass
-

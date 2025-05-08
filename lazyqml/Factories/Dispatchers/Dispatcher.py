@@ -14,17 +14,35 @@ from multiprocessing import Queue, Process, Pool, Manager
 from statistics import mean
 from collections import defaultdict
 from time import time, sleep
+from itertools import product
 
 class Dispatcher:
-    def __init__(self, sequential=False, threshold=22, time=True, folds=10, repeats=5, cores=-1):
+    def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, features, learningRate, epochs, runs, batch, maxSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1):
         self.sequential = sequential
         self.threshold = threshold
         self.timeM = time
-        self.fold = folds
-        self.repeat = repeats
         self.cores = cores
 
-    def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions, customMetric):
+        self.nqubits = nqubits
+        self.randomstate = randomstate
+        self.shots = shots
+        self.numPredictors = numPredictors
+        self.numLayers = numLayers
+        self.classifiers = classifiers
+        self.ansatzs = ansatzs
+        self.backend = backend
+        self.embeddings = embeddings
+        self.features = features
+        self.learningRate = learningRate
+        self.epochs = epochs
+        self.batch = batch
+        self.maxSamples = maxSamples
+        self.customMetric = customMetric
+        self.customImputerNum = customImputerNum
+        self.customImputerCat = customImputerCat
+        self.predictions = predictions
+
+    def execute_model(self, model_factory_params, X_train, y_train, X_test, y_test, predictions,  customMetric):
         model = ModelFactory().getModel(**model_factory_params)
         preds = []
         accuracy, b_accuracy, f1, custom = 0, 0, 0, 0
@@ -43,8 +61,7 @@ class Dispatcher:
 
         exeT = time() - start
 
-        return model_factory_params['Nqubits'], model_factory_params['model'], model_factory_params['Embedding'], model_factory_params['Ansatz'], model_factory_params['Max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
-
+        return model_factory_params['nqubits'], model_factory_params['model'], model_factory_params['embedding'], model_factory_params['ansatz'], model_factory_params['max_features'], exeT, accuracy, b_accuracy, f1, custom, preds
 
     def process_gpu_task(self, queue, results):
         while not queue.empty():
@@ -57,7 +74,6 @@ class Dispatcher:
                 printer.print(partial_result)
             except queue.Empty:
                 break
-
 
     def process_cpu_task(self,cpu_queue, gpu_queue, results):
         numProcs = psutil.cpu_count(logical=False)
@@ -134,17 +150,9 @@ class Dispatcher:
 
             except Exception as e:
                 printer.print(f"Error in the batch: {str(e)}")
-                import traceback
-                traceback.print_exc()
                 break
 
-    def dispatch(self, nqubits, randomstate, predictions, shots,
-                numPredictors, numLayers, classifiers, ansatzs, backend,
-                embeddings, features, learningRate, epochs, runs, batch,
-                maxSamples, verbose, customMetric, customImputerNum,
-                customImputerCat, X, y,
-                showTable=True, mode="cross-validation",testsize=0.4, cores=-1):
-
+    def dispatch(self, X, y, showTable, folds=10, repeats=5, mode="cross-validation", testsize=0.4):
         """
         ################################################################################
         Preparing Data Structures & Initializing Variables
@@ -172,9 +180,9 @@ class Dispatcher:
         cv_indices = generate_cv_indices(
             X, y,
             mode=mode,
-            n_splits=self.fold,
-            n_repeats=self.repeat,
-            random_state=randomstate,
+            n_splits=folds,
+            n_repeats=repeats,
+            random_state=self.randomstate,
             test_size=testsize
         )
 
@@ -186,18 +194,17 @@ class Dispatcher:
         """
 
         t_pre = time()
-        combinations = create_combinations(qubits=nqubits,
-                                        classifiers=classifiers,
-                                        embeddings=embeddings,
-                                        features=features,
-                                        ansatzs=ansatzs,
-                                        RepeatID=[i for i in range(self.repeat)],
-                                        FoldID=[i for i in range(self.fold)])
+        combinations = create_combinations(qubits=self.nqubits,
+                                        classifiers=self.classifiers,
+                                        embeddings=self.embeddings,
+                                        features=self.features,
+                                        ansatzs=self.ansatzs,
+                                        RepeatID=range(repeats),
+                                        FoldID=range(folds))
         cancelledQubits = set()
         to_remove = []
 
-
-        for i, combination in enumerate(combinations):
+        for _, combination in enumerate(combinations):
             modelMem = combination[-1]
             if modelMem > RAM and modelMem > VRAM:
                 to_remove.append(combination)
@@ -228,8 +235,8 @@ class Dispatcher:
                 X,
                 y,
                 prepFactory,
-                customImputerCat,
-                customImputerNum,
+                self.customImputerCat,
+                self.customImputerNum,
                 train_idx,
                 test_idx,
                 ansatz=ansatz,
@@ -237,31 +244,31 @@ class Dispatcher:
             )
 
             model_factory_params = {
-                "Nqubits": adjustedQubits,
+                "nqubits": adjustedQubits,
                 "model": name,
-                "Embedding": embedding,
-                "Ansatz": ansatz,
-                "N_class": numClasses,
-                "backend": backend,
-                "Shots": shots,
-                "seed": randomstate*repeat,
-                "Layers": numLayers,
-                "Max_samples": maxSamples,
-                "Max_features": feature,
-                "LearningRate": learningRate,
-                "BatchSize": batch,
-                "Epoch": epochs,
-                "numPredictors": numPredictors
+                "embedding": embedding,
+                "ansatz": ansatz,
+                "n_class": numClasses,
+                "backend": self.backend,
+                "shots": self.shots,
+                "seed": self.randomstate*repeat,
+                "layers": self.numLayers,
+                "max_samples": self.maxSamples,
+                "max_features": feature,
+                "lr": self.learningRate,
+                "batch_size": self.batch,
+                "epochs": self.epochs,
+                "numPredictors": self.numPredictors
             }
 
             # When adding items to queues
-            if name == Model.QNN and qubits >= self.threshold and VRAM > calculate_quantum_memory(qubits):
+            if name == Model.QNN and qubits >= self.threshold and VRAM > memModel:
                 model_factory_params["backend"] = Backend.lightningGPU if not tensor_sim else Backend.lightningTensor
-                gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
+                gpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
                 gpu_items.append(combination)
             else:
                 model_factory_params["backend"] = Backend.lightningQubit if not tensor_sim else Backend.defaultTensor
-                cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, predictions, customMetric)))
+                cpu_queue.put((combination,(model_factory_params, X_train_processed, y_train_processed, X_test_processed, y_test_processed, self.predictions, self.customMetric)))
                 cpu_items.append(combination)
 
         if self.timeM:
@@ -315,7 +322,7 @@ class Dispatcher:
             accuracy = mean([r[6] for r in group])
             balanced_accuracy = mean([r[7] for r in group])
             f1_score = mean([r[8] for r in group])
-            if customMetric:
+            if self.customMetric:
                 if mode == "hold-out":
                     cols = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score", "Custom Metric", "Predictions"]
                     summary.append((key[0], key[1], key[2], key[3], key[4], time_taken, accuracy, balanced_accuracy, f1_score, custom_metric, []))
