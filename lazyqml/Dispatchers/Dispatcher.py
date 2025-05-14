@@ -3,7 +3,7 @@
 from lazyqml.Utils import *
 from lazyqml.Factories import ModelFactory, PreprocessingFactory
 from lazyqml.Global.globalEnums import Model, Backend
-from lazyqml.Dispatchers import QMLTask
+from .Tasks import QMLTask
     # External Libraries
 import numpy as np
 import pandas as pd
