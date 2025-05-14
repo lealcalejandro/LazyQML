@@ -21,7 +21,7 @@ class QKNN(Model):
         self.k = k
         self.shots = shots
         self.device = qml.device(backend.value, wires=nqubits, seed=seed, shots=self.shots)
-        self.CircuitFactory = CircuitFactory(nqubits,nlayers=0)
+        self.circuit_factory = CircuitFactory(nqubits,nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
         self.X_train = None
@@ -30,7 +30,7 @@ class QKNN(Model):
         """Build the quantum kernel circuit."""
 
          # Get the embedding circuit from the circuit factory
-        embedding_circuit = self.CircuitFactory.GetEmbeddingCircuit(self.embedding).getCircuit()
+        embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding).getCircuit()
 
         @qml.qnode(self.device, diff_method=None)
         def kernel(x1, x2):
@@ -41,7 +41,7 @@ class QKNN(Model):
         return kernel
 
     def _compute_distances(self, x1, x2):
-        return 1-self.kernel_circ(x1, x2)[0]
+        return 1 - self.kernel_circ(x1, x2)[0]
 
     def fit(self, X, y):
         """
@@ -53,7 +53,8 @@ class QKNN(Model):
         self.X_train = X
         self.y_train = y
         self.q_distances = self._compute_distances
-        printer.print("\t\tTraining the KNN...")
+        
+        printer.print("\t\tTraining the QKNN...")
         self.KNN = KNeighborsClassifier(n_neighbors=self.k, metric=self.q_distances)
         self.KNN.fit(X, y)
 

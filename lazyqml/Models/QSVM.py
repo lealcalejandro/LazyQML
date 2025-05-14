@@ -14,7 +14,7 @@ class QSVM(Model):
         self.embedding = embedding
         self.shots = shots
         self.device = qml.device(backend.value, wires=nqubits)
-        self.CircuitFactory = CircuitFactory(nqubits, nlayers=0)
+        self.circuit_factory = CircuitFactory(nqubits, nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
         self.X_train = None
@@ -29,7 +29,7 @@ class QSVM(Model):
     def _build_kernel(self):
         """Build the quantum kernel using a given embedding and ansatz."""
         # Get the embedding circuit from the circuit factory
-        embedding_circuit = self.CircuitFactory.GetEmbeddingCircuit(self.embedding).getCircuit()
+        embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding).getCircuit()
         
         # Define the kernel circuit with adjoint embedding for the quantum kernel
         @qml.qnode(self.device, diff_method=None)
@@ -43,18 +43,28 @@ class QSVM(Model):
     # Not used at the moment, We might be interested in computing our own kernel.
     def _quantum_kernel(self, X1, X2):
         """Calculate the quantum kernel matrix for SVM."""
+        res = np.ones((len(X1), len(X2)))
+        for i, x1 in enumerate(X1):
+            for j, x2 in enumerate(X2):
+                if np.array_equal(x1, x2):
+                    continue
+                res[i, j] = self.kernel_circ(x1, x2)[0]
 
+        return res
+        # return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
         # return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
-        return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
         # return np.array(self.batch_kernel_circ(X1, X2))[..., 0]
 
     def fit(self, X, y):
         self.X_train = X
-        self.qkernel = self._quantum_kernel(X,X)
-        # Train the classical SVM with the quantum kernel
+
         printer.print("\t\tTraining the SVM...")
+        self.qkernel = self._quantum_kernel(X, X)
+
+        # Train the classical SVM with the quantum kernel
         self.svm = SVC(kernel="precomputed")
         self.svm.fit(self.qkernel, y)
+
         printer.print("\t\tSVM training complete.")
 
     def predict(self, X):
