@@ -85,5 +85,6 @@ class QSVM(Model):
             printer.print(f"Error during prediction: {str(e)}")
             raise
 
-    def getTrainableParameters(self):
-        return "~"
+    @property
+    def n_params(self):
+        return None

@@ -26,7 +26,7 @@ class QNNTorch(Model):
         self.device = device
         self.backend = backend
         self.diff_method = diff_method
-        self.params_per_layer = None
+        self._n_params = None
         self.circuit_factory = CircuitFactory(nqubits, nlayers=layers)
         self.qnn = None
         self.params = None
@@ -47,9 +47,6 @@ class QNNTorch(Model):
         ansatz: Ansatz = self.circuit_factory.GetAnsatzCircuit(self.ansatz)
         embedding: Circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
 
-        # Retrieve parameters per layer from the ansatz
-        self.params_per_layer = ansatz.getParameters()
-
         # Define the quantum circuit as a PennyLane qnode
         @qml.qnode(self.device, interface='torch', diff_method=self.diff_method)
         def circuit(x, theta):
@@ -63,6 +60,12 @@ class QNNTorch(Model):
                 return [qml.expval(qml.PauliZ(wires=n)) for n in range(self.n_class)]
 
         self.qnn = circuit
+        # Retrieve parameters per layer from the ansatz
+        self._n_params = ansatz.n_total_params
+
+    @property
+    def n_params(self):
+        return self._n_params
 
     def forward(self, x, theta):
 
@@ -88,9 +91,8 @@ class QNNTorch(Model):
         # X_train, y_train= X, y
 
         # Initialize parameters as torch tensors
-        num_params = int(self.layers * self.params_per_layer)
-        printer.print(f"\t\tInitializing {num_params} parameters")
-        self.params = torch.randn((num_params,), device=self.device, requires_grad=True)  # Ensure params are on the same device
+        printer.print(f"\t\tInitializing {self.n_params} parameters")
+        self.params = torch.randn((self.n_params,), device=self.device, requires_grad=True)  # Ensure params are on the same device
 
         # Define optimizer
         self.opt = torch.optim.Adam([self.params], lr=self.lr)
@@ -140,6 +142,3 @@ class QNNTorch(Model):
             # For multi-class classification, y_pred is logits of shape [batch_size, n_class]
             # Return the class with the highest logit value
             return torch.argmax(y_pred, dim=1).cpu().numpy()  # Returns class indices
-
-    def getTrainableParameters(self):
-        print(self.params)

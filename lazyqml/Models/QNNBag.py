@@ -149,5 +149,6 @@ class QNNBag(Model):
         else:
             return torch.argmax(y_predictions.detach(), dim=1).cpu().numpy()  # For multi-class predictions
         
-    def getTrainableParameters(self):
-        return self.n_estimators * int(self.layers * self.ansatz.getParameters())
+    @property
+    def n_params(self):
+        return self.n_estimators * self.ansatz.n_total_params

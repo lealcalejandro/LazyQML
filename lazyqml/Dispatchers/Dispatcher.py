@@ -1,9 +1,9 @@
 # Importing from
     # Internal Dependencies
-from lazyqml.Utils import *
 from lazyqml.Factories import ModelFactory, PreprocessingFactory
 from lazyqml.Global.globalEnums import Model, Backend
 from .Tasks import QMLTask
+from lazyqml.Utils import printer, calculate_free_memory, get_simulation_type, calculate_free_video_memory, generate_cv_indices, create_combinations, calculate_quantum_memory, get_train_test_split, dataProcessing
     # External Libraries
 import numpy as np
 import pandas as pd
@@ -59,7 +59,7 @@ class Dispatcher:
         exeT = time() - start
 
         # Construct dataframe with results
-        dict_keys = ['nqubits', 'model', 'embedding', 'ansatz', 'max_features']
+        dict_keys = ['nqubits', 'model', 'embedding', 'ansatz']
         model_attr = {key: model_params[key] for key in dict_keys}
 
         metric_results = {
@@ -71,7 +71,7 @@ class Dispatcher:
             "Predictions": 0
         }
 
-        result = pd.DataFrame([{'id': id, **model_attr, **metric_results}])
+        result = pd.DataFrame([{'id': id, **model_attr, 'features': model.n_params, **metric_results}])
 
         return result
     
@@ -350,7 +350,7 @@ class Dispatcher:
             'model': 'first',
             'embedding': 'first',
             'ansatz': 'first',
-            'max_features': 'first',
+            'features': 'first',
             'Time taken': 'sum',
             'Accuracy': 'mean',
             'Balanced Accuracy': 'mean',
