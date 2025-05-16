@@ -3,10 +3,6 @@ import pennylane as qml
 import numpy as np
 
 class TwoLocal(Ansatz):
-    def __init__(self, nqubits, nlayers):
-        self.nqubits = nqubits
-        self.nlayers = nlayers
-
     def getCircuit(self):
         def TwoLocal(theta, wires):
             """Implements a two-local ansatz circuit.
@@ -30,6 +26,7 @@ class TwoLocal(Ansatz):
                     qml.CNOT(wires = [i, i + 1])
 
         return TwoLocal
-
-    def getParameters(self):
-        return  self.nqubits 
+    
+    @property
+    def n_ansatz_params(self):
+        return self.nqubits

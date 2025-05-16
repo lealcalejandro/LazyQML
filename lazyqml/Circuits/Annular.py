@@ -2,10 +2,6 @@ from lazyqml.Interfaces.iAnsatz import Ansatz
 import pennylane as qml
 
 class Annular(Ansatz):
-    def __init__(self, nqubits, nlayers):
-        self.nqubits = nqubits
-        self.nlayers = nlayers
-
     def getCircuit(self):
         def annular(theta, wires):
             """Implements an annular ansatz circuit.
@@ -35,9 +31,10 @@ class Annular(Ansatz):
 
                 qml.CNOT(wires=[N-1, 0])
                 qml.RY(theta[param_count], wires = 0)
-                param_count += 1    #just in case
+                param_count += 1
 
         return annular
-
-    def getParameters(self):
-        return self.nqubits 
+    
+    @property
+    def n_ansatz_params(self):
+        return self.nqubits
