@@ -11,6 +11,8 @@ from lazyqml.Utils import printer, get_simulation_type, get_max_bond_dim
 
 import warnings
 
+from time import time
+
 class QNNTorch(Model):
     def __init__(self, nqubits, ansatz, embedding, n_class, layers, epochs, shots, lr, batch_size, device, backend, diff_method, seed=1234) -> None:
         super().__init__()
@@ -51,7 +53,7 @@ class QNNTorch(Model):
         @qml.qnode(self.device, interface='torch', diff_method=self.diff_method)
         def circuit(x, theta):
             
-            embedding.getCircuit()(x, wires=range(self.nqubits))
+            embedding(x, wires=range(self.nqubits))
             ansatz.getCircuit()(theta, wires=range(self.nqubits))
 
             if self.n_class==2:
@@ -67,15 +69,15 @@ class QNNTorch(Model):
     def n_params(self):
         return self._n_params
 
-    def forward(self, x, theta):
+    def forward(self, x):
 
-        qnn_output = self.qnn(x, theta)
+        qnn_output = self.qnn(x, self.params)
 
         if self.n_class == 2:
             return qnn_output.squeeze()
         else:
             # If qnn_output is a list, apply the transformation to each element
-            return torch.stack([output for output in qnn_output]).T
+            return torch.stack(qnn_output).T
 
     def fit(self, X, y):
         # Move the model to the appropriate device (GPU or CPU)
@@ -111,11 +113,10 @@ class QNNTorch(Model):
 
                 # Forward pass
                 # batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)  # Ensure batch data is on the same device
-                predictions = torch.stack([self.forward(x, self.params) for x in batch_X])
+                predictions = self.forward(batch_X)
                 # Compute loss
                 loss = self.criterion(predictions, batch_y)  # Ensure all tensors are on the same device
                 loss.backward()
-
                 # Optimization step
                 self.opt.step()
                 epoch_loss += loss.item()
@@ -131,7 +132,7 @@ class QNNTorch(Model):
         X_test = torch.tensor(X, dtype=torch.float32).to(self.device)
         
         # Forward pass for prediction
-        y_pred = torch.stack([self.forward(x, self.params) for x in X_test])
+        y_pred = self.forward(X_test)
         
         if self.n_class == 2:
             # For binary classification, apply sigmoid to get probabilities

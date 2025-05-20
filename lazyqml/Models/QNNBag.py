@@ -46,14 +46,11 @@ class QNNBag(Model):
         ansatz: Ansatz = self.circuit_factory.GetAnsatzCircuit(self.ansatz)
         embedding: Circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
 
-        # Retrieve parameters per layer from the ansatz
-        self.params_per_layer = ansatz.getParameters()
-
         # Define the quantum circuit as a PennyLane qnode
         @qml.qnode(self.deviceQ, interface='torch', diff_method='adjoint')
         def circuit(x, theta):
             # Apply embedding and ansatz circuits
-            embedding.getCircuit()(x, wires=range(self.nqubits))
+            embedding(x, wires=range(self.nqubits))
             ansatz.getCircuit()(theta, wires=range(self.nqubits))
 
             if self.n_class==2:
@@ -62,13 +59,15 @@ class QNNBag(Model):
                 return [qml.expval(qml.PauliZ(wires=n)) for n in range(self.n_class)]
             
         self.qnn = circuit
+        # Retrieve parameters per layer from the ansatz
+        self._n_params = ansatz.n_total_params
 
-    def forward(self, x, theta):
-        qnn_output = self.qnn(x, theta)
+    def forward(self, x):
+        qnn_output = self.qnn(x, self.params)
         if self.n_class == 2:
             return qnn_output.squeeze()
         else:
-            return torch.stack([output for output in qnn_output]).T
+            return torch.stack(qnn_output).T
 
     def fit(self, X, y):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() and self.backend == Backend.lightningGPU else "cpu")
@@ -77,13 +76,11 @@ class QNNBag(Model):
         X = torch.tensor(X, dtype=torch.float32).to(self.device)
         y = torch.tensor(y, dtype=torch.float32 if self.n_class == 2 else torch.long).to(self.device)
 
-        num_params = int(self.layers * self.params_per_layer)
-
         self.random_estimator_features = []
 
         for j in range(self.n_estimators):
             # Re-initialize parameters
-            self.params = torch.randn((num_params,), device=self.device, requires_grad=True)
+            self.params = torch.randn((self.n_params,), device=self.device, requires_grad=True)
             self.opt = torch.optim.Adam([self.params], lr=self.lr)
 
             # Select random samples and features for each estimator
@@ -108,7 +105,7 @@ class QNNBag(Model):
                 epoch_loss = 0.0
                 for batch_X, batch_y in data_loader:
                     self.opt.zero_grad()
-                    predictions = torch.stack([self.forward(x, self.params) for x in batch_X])
+                    predictions = self.forward(batch_X)
                     loss = self.criterion(predictions, batch_y)
                     loss.backward()
                     self.opt.step()
@@ -129,7 +126,7 @@ class QNNBag(Model):
 
         for j in range(self.n_estimators):
             X_test_features = X_test[:, self.random_estimator_features[j]]
-            y_pred = torch.stack([self.forward(x, self.params) for x in X_test_features])
+            y_pred = self.forward(X_test_features)
             
             # Ensure the shape of y_pred matches the expectations
             if self.n_class == 2:
@@ -151,4 +148,4 @@ class QNNBag(Model):
         
     @property
     def n_params(self):
-        return self.n_estimators * self.ansatz.n_total_params
+        return self.n_estimators * self._n_params

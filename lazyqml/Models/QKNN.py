@@ -30,12 +30,14 @@ class QKNN(Model):
         """Build the quantum kernel circuit."""
 
          # Get the embedding circuit from the circuit factory
-        embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding).getCircuit()
+        embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
+        adj_embedding_circuit = qml.adjoint(embedding_circuit)
 
         @qml.qnode(self.device, diff_method=None)
         def kernel(x1, x2):
             embedding_circuit(x1, wires=range(self.nqubits))
-            qml.adjoint(embedding_circuit)(x2, wires=range(self.nqubits))
+            adj_embedding_circuit(x2, wires=range(self.nqubits))
+            
             return qml.probs(wires = range(self.nqubits))
         
         return kernel
