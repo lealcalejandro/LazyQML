@@ -11,7 +11,7 @@ class DenseAngleEmbedding(Operation):
         
         shape = qml.math.shape(features)[-1:]
         n_features = shape[0]
-        if n_features > len(wires):
+        if n_features > 2*len(wires):
             raise ValueError(
                 f"Features must be of length {len(wires)} or less; got length {n_features}."
             )
@@ -30,7 +30,6 @@ class DenseAngleEmbedding(Operation):
     def compute_decomposition(features, wires):
 
         batched = qml.math.ndim(features) > 1
-        features = qml.math.T(features) if batched else features
 
         # padding del stateprep (usado en el amplitude embedding)
         # if n_states < dim:
@@ -45,10 +44,24 @@ class DenseAngleEmbedding(Operation):
         n = len(wires)
 
         shape = tuple(features.shape)
-        n_features = shape[0] if batched else shape[1]
+        n_features = shape[0] if not batched else shape[1]
 
+        # if n_features < 2*n:
+        #     if batched:
+        #         features = F.pad(features, (0, 0, 0, 2*n - n_features), 'constant', 0)
+        #     else:
+        #         features = F.pad(features, (0, 2*n - n_features), 'constant', 0)
+
+        # print(shape, features)
         if n_features < 2*n:
-            features = F.pad(features, (0, 0, 0, 2*n - n_features), 'constant', 0)
+            padding = [0] * (2*n - n_features)
+            if len(shape) > 1:
+                padding = [padding] * shape[0]
+            padding = qml.math.convert_like(padding, features)
+            features = qml.math.hstack([features, padding])
+        # print(features)
+
+        features = qml.math.T(features) if batched else features
 
         # qml.AngleEmbedding(x[..., :N], wires=wires, rotation='Y')
         for i in wires:
