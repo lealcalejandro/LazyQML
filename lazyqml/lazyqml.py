@@ -79,14 +79,14 @@ class QuantumClassifier(BaseModel):
     ansatzs: Annotated[Set[Ansatzs], Field(min_items=1)] = {Ansatzs.ALL}
     embeddings: Annotated[Set[Embedding], Field(min_items=1)] = {Embedding.ALL}
     backend: Backend = Backend.lightningQubit
-    features: Annotated[Set[float], Field(min_items=1)] = {0.3, 0.5, 0.8}
     learningRate: Annotated[float, Field(gt=0)] = 0.01
     epochs: Annotated[int, Field(gt=0)] = 100
     shots: Annotated[int, Field(gt=0)] = 1
     runs: Annotated[int, Field(gt=0)] = 1
     batchSize: Annotated[int, Field(gt=0)] = 8
     threshold: Annotated[int, Field(gt=0)] = 22
-    maxSamples: Annotated[float, Field(gt=0, le=1)] = 1.0
+    numSamples: Annotated[float, Field(gt=0, le=1)] = 1.0
+    numFeatures: Annotated[Set[float], Field(min_items=1)] = {0.3, 0.5, 0.8}
     verbose: bool = False
     customMetric: Optional[Callable] = None
     customImputerNum: Optional[Any] = None
@@ -105,7 +105,7 @@ class QuantumClassifier(BaseModel):
 
         return value
 
-    @field_validator('features')
+    @field_validator('numFeatures')
     def validate_features(cls, v):
         if not all(0 < x <= 1 for x in v):
             raise ValueError("All features must be greater than 0 and less than or equal to 1")
@@ -200,11 +200,11 @@ class QuantumClassifier(BaseModel):
             ansatzs=self.ansatzs,
             backend=self.backend,
             embeddings=self.embeddings,
-            features=self.features,
             learningRate=self.learningRate,
             epochs=self.epochs,
             runs=self.runs,
-            maxSamples=self.maxSamples,
+            numSamples=self.numSamples,
+            numFeatures=self.numFeatures,
             customMetric=self.customMetric,
             customImputerNum=self.customImputerNum,
             customImputerCat=self.customImputerCat,

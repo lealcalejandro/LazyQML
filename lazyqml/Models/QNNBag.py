@@ -12,7 +12,7 @@ import warnings
 
 class QNNBag(Model):
 
-    def __init__(self, nqubits, backend, ansatz, embedding, n_class, layers, epochs, max_samples, max_features, n_features, n_estimators, shots, lr=0.01, batch_size=50, seed=1234) -> None:
+    def __init__(self, nqubits, backend, ansatz, embedding, n_class, layers, epochs, n_features, n_samples, n_estimators, shots, lr=0.01, batch_size=50, seed=1234) -> None:
         super().__init__()
         self.nqubits = nqubits
         self.ansatz = ansatz
@@ -23,8 +23,8 @@ class QNNBag(Model):
         self.epochs = epochs
         self.lr = lr
         self.batch_size = batch_size
-        self.max_samples = max_samples
-        self.max_features = max_features
+        self.n_samples = n_samples
+        self.n_features = n_features
         self.n_estimators = n_estimators
         self.backend = backend
         self.deviceQ = qml.device(backend.value, wires=self.nqubits)
@@ -84,11 +84,11 @@ class QNNBag(Model):
             self.opt = torch.optim.Adam([self.params], lr=self.lr)
 
             # Select random samples and features for each estimator
-            random_estimator_samples = np.random.choice(a=X.shape[0], size=(int(self.max_samples * X.shape[0]),), replace=False)
+            random_estimator_samples = np.random.choice(a=X.shape[0], size=(int(self.n_samples * X.shape[0]),), replace=False)
             X_train_est = X[random_estimator_samples, :]
             y_train_est = y[random_estimator_samples]
 
-            random_estimator_features = np.random.choice(a=X_train_est.shape[1], size=max(1, int(self.max_features * X_train_est.shape[1])), replace=False)
+            random_estimator_features = np.random.choice(a=X_train_est.shape[1], size=max(1, int(self.n_features * X_train_est.shape[1])), replace=False)
             self.random_estimator_features.append(random_estimator_features)
 
             # Filter data by selected features
@@ -105,9 +105,11 @@ class QNNBag(Model):
                 epoch_loss = 0.0
                 for batch_X, batch_y in data_loader:
                     self.opt.zero_grad()
+
                     predictions = self.forward(batch_X)
                     loss = self.criterion(predictions, batch_y)
                     loss.backward()
+
                     self.opt.step()
                     epoch_loss += loss.item()
 

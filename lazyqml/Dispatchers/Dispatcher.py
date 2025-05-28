@@ -15,7 +15,7 @@ import queue
 from time import time, sleep
 
 class Dispatcher:
-    def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, features, learningRate, epochs, runs, batch, maxSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1):
+    def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, numFeatures, learningRate, epochs, runs, batch, numSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1):
         self.sequential = sequential
         self.threshold = threshold
         self.timeM = time
@@ -30,11 +30,11 @@ class Dispatcher:
         self.ansatzs = ansatzs
         self.backend = backend
         self.embeddings = embeddings
-        self.features = features
         self.learningRate = learningRate
         self.epochs = epochs
         self.batch = batch
-        self.maxSamples = maxSamples
+        self.numSamples = numSamples
+        self.numFeatures = numFeatures
         self.customMetric = customMetric
         self.customImputerNum = customImputerNum
         self.customImputerCat = customImputerCat
@@ -59,7 +59,7 @@ class Dispatcher:
         exeT = time() - start
 
         # Construct dataframe with results
-        dict_keys = ['nqubits', 'model', 'embedding', 'ansatz']
+        dict_keys = ['nqubits', 'model', 'embedding', 'ansatz', 'n_features', 'n_samples']
         model_attr = {key: model_params[key] for key in dict_keys}
 
         metric_results = {
@@ -207,6 +207,7 @@ class Dispatcher:
             test_size=testsize
         )
 
+        # print(cv_indices)
 
         """
         ################################################################################
@@ -218,7 +219,7 @@ class Dispatcher:
         combinations = create_combinations(qubits=self.nqubits,
                                         classifiers=self.classifiers,
                                         embeddings=self.embeddings,
-                                        features=self.features,
+                                        features=self.numFeatures,
                                         ansatzs=self.ansatzs,
                                         repeats=repeats,
                                         folds=folds)
@@ -243,7 +244,7 @@ class Dispatcher:
 
         # Prepare all model executions
         for combination in combinations:
-            id, qubits, name, embedding, ansatz, feature, repeat, fold, memModel = combination
+            id, qubits, name, embedding, ansatz, n_features, repeat, fold, memModel = combination
             # feature = feature if feature is not None else "~"
 
             # Get indices for this repeat/fold combination
@@ -275,8 +276,8 @@ class Dispatcher:
                 "shots": self.shots,
                 "seed": self.randomstate*repeat,
                 "layers": self.numLayers,
-                "max_samples": self.maxSamples,
-                "max_features": feature,
+                "n_samples": self.numSamples,
+                "n_features": n_features,
                 "lr": self.learningRate,
                 "batch_size": self.batch,
                 "epochs": self.epochs,
@@ -317,7 +318,9 @@ class Dispatcher:
         Creating processes
         ################################################################################
         """
-        sleep(.001)
+        # Wait a bit to add remaining tasks to queue
+        sleep(0.1)
+
         executionTime = time()
         gpu_process = None
         # Start GPU process
@@ -351,6 +354,8 @@ class Dispatcher:
             'embedding': 'first',
             'ansatz': 'first',
             'features': 'first',
+            'n_features': 'first',
+            'n_samples': 'first',
             'Time taken': 'sum',
             'Accuracy': 'mean',
             'Balanced Accuracy': 'mean',
@@ -363,7 +368,7 @@ class Dispatcher:
             scores = scores.drop(columns=['Custom Metric'])
 
         scores = scores.fillna("~")
-        scores.columns = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score"]
+        scores.columns = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "% Features", "% Samples", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score"]
 
         # Sort scores
         scores = scores.sort_values(by="Balanced Accuracy", ascending=False).reset_index(drop=True)

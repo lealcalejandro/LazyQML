@@ -11,7 +11,7 @@ class ModelFactory:
 
     def getModel(self, model, nqubits, embedding, ansatz,
                  n_class, layers=5, shots=1,
-                 max_samples=1.0, max_features=1.0,
+                 n_samples=1.0, n_features=1.0,
                  lr=0.01, batch_size=8, epochs=50,
                  seed=1234, backend=Backend.lightningQubit, numPredictors=10, K=20):
         
@@ -52,7 +52,7 @@ class ModelFactory:
         elif model == Model.QNN_BAG:
             return QNNBag(nqubits=nqubits, ansatz=ansatz, embedding=embedding, 
                           n_class=n_class, layers=layers, epochs=epochs, 
-                          max_samples=max_samples, max_features=max_features,
+                          n_samples=n_samples, n_features=n_features,
                           shots=shots, lr=lr, batch_size=batch_size,
                           seed=seed, backend=backend,
-                          n_estimators=numPredictors, n_features=max_features)
+                          n_estimators=numPredictors)
