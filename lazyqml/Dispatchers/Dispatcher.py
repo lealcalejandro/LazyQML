@@ -363,12 +363,19 @@ class Dispatcher:
             'Custom Metric': 'mean'
         })
 
+        scores.loc[scores['model'] != Model.QNN_BAG, 'n_samples'] = np.nan
+ 
         # Clean and format dataframe
         if not self.customMetric:
             scores = scores.drop(columns=['Custom Metric'])
 
-        scores = scores.fillna("~")
         scores.columns = ["Qubits", "Model", "Embedding", "Ansatz", "Features", "% Features", "% Samples", "Time taken", "Accuracy", "Balanced Accuracy", "F1 Score"]
+
+        # Remove columns if all empty
+        scores = scores.dropna(how='all', axis=1)
+
+        # Fill values if empty
+        scores = scores.fillna("~")
 
         # Sort scores
         scores = scores.sort_values(by="Balanced Accuracy", ascending=False).reset_index(drop=True)
