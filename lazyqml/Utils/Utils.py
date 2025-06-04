@@ -297,6 +297,22 @@ def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
     return X_train_processed, X_test_processed, y_train, y_test
 
 ######
+def get_embedding_expressivity(nqubits, embedding):
+    if embedding == Embedding.AMP:
+        return 2**nqubits
+    elif embedding == Embedding.DENSE_ANGLE:
+        return 2*nqubits
+    else:
+        return nqubits
+    
+def find_output_shape(model, sample):
+    sample = torch.Tensor(sample)
+
+    output = torch.flatten(model(sample))
+    return output.shape[0]
+
+
+######
 def set_max_bond_dim(dim: int):
     """
     Sets the maximum bond dimension for tensor network simulation.
