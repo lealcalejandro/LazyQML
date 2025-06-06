@@ -9,6 +9,10 @@ from functools import partial
 
 from time import time
 
+import torch
+from itertools import product
+from itertools import combinations_with_replacement
+
 class QSVM(Model):
     def __init__(self, nqubits, embedding, backend, shots, seed=1234):
         super().__init__()
@@ -55,8 +59,39 @@ class QSVM(Model):
         #             continue
         #         res[i, j] = self.kernel_circ(x1, x2)[0]
 
-        # return res
-        return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
+        if np.array_equal(X1, X2):
+            data_loader = torch.utils.data.DataLoader(
+                list(combinations_with_replacement(X1, 2)), batch_size=32, shuffle=False, drop_last=False
+            )
+
+            res = np.eye(len(X1))
+            partial_res = []
+            for _X1, _X2 in data_loader:
+                # print(_X1.size(), _X2.size())
+                _res = self.kernel_circ(_X1, _X2)
+                # print(_res[..., 0])
+                partial_res.extend(_res[..., 0])
+
+            res[np.triu_indices(len(X1), k = 0)] = partial_res
+            res = res + res.T - np.eye(len(X1))
+
+        else:
+            data_loader = torch.utils.data.DataLoader(
+                list(product(X1, X2)), batch_size=8, shuffle=False, drop_last=False
+            )
+
+            res = []
+            for _X1, _X2 in data_loader:
+                # print(_X1.size(), _X2.size())
+                _res = self.kernel_circ(_X1, _X2)
+                # print(_res[..., 0])
+                res.extend(_res[..., 0])
+
+            res = np.array(res)
+            res = np.reshape(res, (len(X1), len(X2)))
+
+        return res
+        # return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
         # return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
         # return np.array(self.batch_kernel_circ(X1, X2))[..., 0]
 
@@ -64,8 +99,17 @@ class QSVM(Model):
         self.X_train = X
 
         printer.print("\t\tTraining the SVM...")
-        # self.qkernel = self._quantum_kernel(X, X)
-        self.qkernel = qml.kernels.kernel_matrix(X, X, lambda x1, x2: self.kernel_circ(x1, x2)[0])
+        t0 = time()
+        self.qkernel = self._quantum_kernel(X, X)
+        # self.qkernel = qml.kernels.square_kernel_matrix(X, lambda x1, x2: self.kernel_circ(x1, x2)[0], True)
+        # print(f'Is equal: {np.array_equal(self.qkernel, true_kernel)}')
+        # self.qkernel = qml.kernels.kernel_matrix(X, X, lambda x1, x2: self.kernel_circ(x1, x2)[0])
+
+        # def check_symmetric(a, b, rtol=1e-05, atol=1e-08):
+        #     return np.allclose(a, b, rtol=rtol, atol=atol)
+        # print(f'Is symmetric: {check_symmetric(self.qkernel, true_kernel)}')
+
+        printer.print(f'{self.embedding} + {self.nqubits} :{time() - t0}')
 
         # Train the classical SVM with the quantum kernel
         self.svm = SVC(kernel="precomputed")
