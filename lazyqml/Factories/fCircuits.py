@@ -2,7 +2,7 @@
 from lazyqml.Global.globalEnums import Ansatzs, Embedding
 # Importing Circuits
 from lazyqml.Circuits.Ansatzs import HardwareEfficient, HCzRx, TreeTensor, TwoLocal, Annular
-from lazyqml.Circuits.Embeddings import DenseAngleEmbedding, ZZEmbedding, HigherOrderEmbedding
+from lazyqml.Circuits.Embeddings import DenseAngleEmbedding, ZZEmbedding, HigherOrderEmbedding, ChebyshevEmbedding, YZ_CX_Embedding, HighDimEmbedding
 
 from functools import partial
 import pennylane as qml
@@ -49,3 +49,12 @@ class CircuitFactory:
         
         elif embedding == Embedding.HIGHER_ORDER:
             return HigherOrderEmbedding
+        
+        elif embedding == Embedding.CHEBYSHEV:
+            return ChebyshevEmbedding
+        
+        elif embedding == Embedding.YZ_CX:
+            return YZ_CX_Embedding
+        
+        elif embedding == Embedding.HIGH_DIM:
+            return HighDimEmbedding

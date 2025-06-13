@@ -30,6 +30,9 @@ class Embedding(BaseEnum):
     AMP = 6
     DENSE_ANGLE = 7
     HIGHER_ORDER = 8
+    CHEBYSHEV = 9
+    YZ_CX = 10
+    HIGH_DIM = 11
 
 # Enum for selecting the Models
 class Model(BaseEnum):
