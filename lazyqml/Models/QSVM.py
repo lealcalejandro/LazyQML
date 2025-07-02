@@ -9,9 +9,13 @@ from functools import partial
 
 from time import time
 
-import torch
-from itertools import product
-from itertools import combinations_with_replacement
+# import torch
+# from itertools import product
+# from itertools import combinations_with_replacement
+
+from threadpoolctl import threadpool_limits
+
+# from sys import getsizeof
 
 class QSVM(Model):
     def __init__(self, nqubits, embedding, backend, shots, seed=1234):
@@ -20,6 +24,7 @@ class QSVM(Model):
         self.embedding = embedding
         self.shots = shots
         self.device = qml.device(backend.value, wires=nqubits)
+        # self.device = qml.device('default.qubit', wires=nqubits)
         self.circuit_factory = CircuitFactory(nqubits, nlayers=0)
         self.kernel_circ = self._build_kernel()
         self.qkernel = None
@@ -35,19 +40,29 @@ class QSVM(Model):
     def _build_kernel(self):
         """Build the quantum kernel using a given embedding and ansatz."""
         # Get the embedding circuit from the circuit factory
+        # embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
+        # adj_embedding_circuit = qml.adjoint(embedding_circuit)
+        
+        # # Define the kernel circuit with adjoint embedding for the quantum kernel
+        # @qml.qnode(self.device, diff_method=None)
+        # def kernel(x1, x2):
+
+        #     embedding_circuit(x1, wires=range(self.nqubits))
+        #     adj_embedding_circuit(x2, wires=range(self.nqubits))
+
+        #     return qml.probs(wires = range(self.nqubits))
+        
+        # return kernel
+
         embedding_circuit = self.circuit_factory.GetEmbeddingCircuit(self.embedding)
-        adj_embedding_circuit = qml.adjoint(embedding_circuit)
-        
-        # Define the kernel circuit with adjoint embedding for the quantum kernel
+
         @qml.qnode(self.device, diff_method=None)
-        def kernel(x1, x2):
-
-            embedding_circuit(x1, wires=range(self.nqubits))
-            adj_embedding_circuit(x2, wires=range(self.nqubits))
-
-            return qml.probs(wires = range(self.nqubits))
+        def encoding_circ(x):
+            embedding_circuit(x, wires=range(self.nqubits))
+            return qml.state()
         
-        return kernel
+        return encoding_circ
+
     
     # Not used at the moment, We might be interested in computing our own kernel.
     def _quantum_kernel(self, X1, X2):
@@ -59,41 +74,56 @@ class QSVM(Model):
         #             continue
         #         res[i, j] = self.kernel_circ(x1, x2)[0]
 
-        if np.array_equal(X1, X2):
-            data_loader = torch.utils.data.DataLoader(
-                list(combinations_with_replacement(X1, 2)), batch_size=32, shuffle=False, drop_last=False
-            )
 
-            res = np.eye(len(X1))
-            partial_res = []
-            for _X1, _X2 in data_loader:
-                # print(_X1.size(), _X2.size())
-                _res = self.kernel_circ(_X1, _X2)
-                # print(_res[..., 0])
-                partial_res.extend(_res[..., 0])
 
-            res[np.triu_indices(len(X1), k = 0)] = partial_res
-            res = res + res.T - np.eye(len(X1))
+        """
+        Function to evaluate the kernel matrix with statevector simulator using PennyLane.
 
-        else:
-            data_loader = torch.utils.data.DataLoader(
-                list(product(X1, X2)), batch_size=8, shuffle=False, drop_last=False
-            )
+        Evaluates the kernel matrix using the statevectors, overlap is then
+        classically calculated.
 
-            res = []
-            for _X1, _X2 in data_loader:
-                # print(_X1.size(), _X2.size())
-                _res = self.kernel_circ(_X1, _X2)
-                # print(_res[..., 0])
-                res.extend(_res[..., 0])
+        Args:
+            x (np.ndarray): Vector of data for which the kernel matrix is evaluated
+            y (np.ndarray): Vector of data for which the kernel matrix is evaluated
+                            (can be similar to x)
 
-            res = np.array(res)
-            res = np.reshape(res, (len(X1), len(X2)))
+        Returns:
+            np.ndarray: Quantum kernel matrix as 2D numpy array.
+        """
+        
+        is_symmetric = np.array_equal(X1, X2)
 
-        return res
-        # return np.array([[self.kernel_circ(x1, x2) for x2 in X2]for x1 in X1])[..., 0]
-        # return np.array([self.batch_kernel_circ(x1, X2) for x1 in X1])[..., 0]
-        # return np.array(self.batch_kernel_circ(X1, X2))[..., 0]
+        def get_kernel_entry(x: np.ndarray, y: np.ndarray) -> float:
+            """Compute the kernel entry based on the overlap x and y."""
+            # Calculate overlap between statevector x and y
+            overlap = np.abs(np.matmul(x.conj(), y)) ** 2
+            # If shots are set, draw from the binomial distribution
+            
+            #overlap = algorithm_globals.random.binomial(n=5000, p=overlap) / 5000
+            return overlap
+
+        x_sv = np.array(self.kernel_circ(X1))
+        y_sv = np.array(self.kernel_circ(X2))
+            
+        if len(x_sv.shape) == 1:
+            x_sv = np.array([x_sv])
+        if len(y_sv.shape) == 1:
+            y_sv = np.array([y_sv])
+        
+        kernel_matrix = np.eye(X1.shape[0], X2.shape[0])
+
+        with threadpool_limits(limits=1, user_api='blas'):
+            if is_symmetric:
+                for i in range(len(x_sv)):
+                    for j in range(i + 1, len(x_sv)):
+                        kernel_matrix[i, j] = get_kernel_entry(x_sv[i], y_sv[j])
+                        kernel_matrix[j, i] = kernel_matrix[i, j]
+            else:
+                for i, x_ in enumerate(x_sv):
+                    for j, y_ in enumerate(y_sv):
+                        kernel_matrix[i, j] = get_kernel_entry(x_, y_)
+
+        return kernel_matrix
 
     def fit(self, X, y):
         self.X_train = X
@@ -125,8 +155,8 @@ class QSVM(Model):
             printer.print(f"\t\t\tComputing kernel between test and training data...")
             
             # Compute kernel between test data and training data
-            # kernel_test = self._quantum_kernel(X, self.X_train)
-            kernel_test = qml.kernels.kernel_matrix(X, self.X_train, lambda x1, x2: self.kernel_circ(x1, x2)[0])
+            kernel_test = self._quantum_kernel(X, self.X_train)
+            # kernel_test = qml.kernels.kernel_matrix(X, self.X_train, lambda x1, x2: self.kernel_circ(x1, x2)[0])
 
             if kernel_test.shape[1] == 0:
                 raise ValueError(f"Invalid kernel matrix shape: {kernel_test.shape}")
@@ -141,3 +171,66 @@ class QSVM(Model):
     @property
     def n_params(self):
         return None
+    
+
+# def _build_circ(self):
+
+#         embedding_circuit = self.CircuitFactory.GetEmbeddingCircuit(self.embedding).getCircuit()
+
+#         @qml.qnode(self.device)
+#         def encoding_circ(x):
+#             embedding_circuit(x, wires=range(self.nqubits))
+#             return qml.state()
+        
+#         return encoding_circ
+
+
+#     def _quantum_kernel(self, x, y):
+#         """
+#         Function to evaluate the kernel matrix with statevector simulator using PennyLane.
+
+#         Evaluates the kernel matrix using the statevectors, overlap is then
+#         classically calculated.
+
+#         Args:
+#             x (np.ndarray): Vector of data for which the kernel matrix is evaluated
+#             y (np.ndarray): Vector of data for which the kernel matrix is evaluated
+#                             (can be similar to x)
+
+#         Returns:
+#             np.ndarray: Quantum kernel matrix as 2D numpy array.
+#         """
+        
+#         is_symmetric = np.array_equal(x,y)
+
+#         def get_kernel_entry(x: np.ndarray, y: np.ndarray) -> float:
+#                 """Compute the kernel entry based on the overlap x and y."""
+#                 # Calculate overlap between statevector x and y
+#                 overlap = np.abs(np.matmul(x.conj(), y)) ** 2
+#                 # If shots are set, draw from the binomial distribution
+                
+#                 #overlap = algorithm_globals.random.binomial(n=5000, p=overlap) / 5000
+#                 return overlap
+
+#         x_sv = np.array(self.kernel_circ(x))
+#         y_sv = np.array(self.kernel_circ(y))
+            
+#         if len(x_sv.shape) == 1:
+#             x_sv = np.array([x_sv])
+#         if len(y_sv.shape) == 1:
+#             y_sv = np.array([y_sv])
+        
+#         kernel_matrix = np.eye(x.shape[0], y.shape[0])
+
+#         if is_symmetric:
+#             for i in range(len(x_sv)):
+#                 for j in range(i+1,len(x_sv)):
+#                     kernel_matrix[i, j] = get_kernel_entry(x_sv[i], y_sv[j])
+#                     kernel_matrix[j, i] = kernel_matrix[i, j]
+                    
+#         else:
+#             for i, x_ in enumerate(x_sv):
+#                     for j, y_ in enumerate(y_sv):
+#                         kernel_matrix[i, j] = get_kernel_entry(x_, y_)
+
+#         return kernel_matrix
