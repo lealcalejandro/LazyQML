@@ -6,6 +6,7 @@ import psutil
 import GPUtil
 from itertools import product
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
+from threadpoolctl import threadpool_info
 
 # Importing from
 from lazyqml.Global.globalEnums import *
@@ -346,6 +347,15 @@ def set_simulation_type(sim):
 
 def get_simulation_type():
     return cfg._simulation
+######
+
+def _numpy_math_api():
+    runtime_cfg = threadpool_info()
+    
+    for cfg in runtime_cfg:
+        if cfg['filepath'].find('numpy') != -1:
+            return cfg['user_api']
+
 ######
 
 printer = VerbosePrinter()

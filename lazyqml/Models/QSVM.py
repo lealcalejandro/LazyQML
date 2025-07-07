@@ -1,9 +1,9 @@
-from lazyqml.Interfaces.iModel import Model
 import numpy as np
 from sklearn.svm import SVC
 import pennylane as qml
 from lazyqml.Factories import CircuitFactory
-from lazyqml.Utils import printer
+from lazyqml.Utils import printer, _numpy_math_api
+from lazyqml.Interfaces.iModel import Model
 
 from functools import partial
 
@@ -112,7 +112,7 @@ class QSVM(Model):
         
         kernel_matrix = np.eye(X1.shape[0], X2.shape[0])
 
-        with threadpool_limits(limits=1, user_api='blas'):
+        with threadpool_limits(limits=1, user_api=_numpy_math_api()):
             if is_symmetric:
                 for i in range(len(x_sv)):
                     for j in range(i + 1, len(x_sv)):
