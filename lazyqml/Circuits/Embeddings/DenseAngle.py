@@ -21,7 +21,6 @@ class DenseAngleEmbedding(Operation):
         wires = wires[:n_features]
         super().__init__(features, wires=wires, id=id)
 
-
     @property
     def num_params(self):
         return 1
@@ -37,13 +36,7 @@ class DenseAngleEmbedding(Operation):
         shape = tuple(features.shape)
         n_features = shape[0] if not batched else shape[1]
 
-        # if n_features < 2*n:
-        #     if batched:
-        #         features = F.pad(features, (0, 0, 0, 2*n - n_features), 'constant', 0)
-        #     else:
-        #         features = F.pad(features, (0, 2*n - n_features), 'constant', 0)
-
-        # print(shape, features)
+        # Padding if necessary
         if n_features < 2*n_qubits:
             padding = [0] * (2*n_qubits - n_features)
             if len(shape) > 1:
