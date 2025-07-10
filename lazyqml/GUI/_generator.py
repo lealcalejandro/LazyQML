@@ -1,4 +1,4 @@
-from _layout import *
+from lazyqml.GUI._layout import *
 
 import sys
 
