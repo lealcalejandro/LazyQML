@@ -17,18 +17,19 @@ class TreeTensor(Ansatz):
             N = len(wires)
 
             dim = int(np.log2(N))
+            _N = 2**dim
 
-            param_count = 0
-
+            # print(dim, self.n_total_params, len(theta))
             for nl in range(self.nlayers):
-                for i in range (dim+1):
+                param_count = 0
+                for i in range(dim + 1):
                     step = 2**i
-                    for j in np.arange(0, N, 2*step):
+                    for j in np.arange(0, _N, 2*step):
                         qml.RY(theta[param_count], wires = j)
                         param_count += 1
                         if(i<dim):
                             qml.RY(theta[param_count], wires = j + step)
-                            param_count +=1
+                            param_count += 1
                             qml.CNOT(wires = [j, j + step])
 
         return tree_tensor_ansatz
