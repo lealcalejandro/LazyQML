@@ -150,4 +150,4 @@ class QNNBag(Model):
         
     @property
     def n_params(self):
-        return self.n_estimators * self._n_params
+        return self._n_params
