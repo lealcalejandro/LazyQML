@@ -61,7 +61,9 @@ class QNNTorch(Model):
             else:
                 return [qml.expval(qml.PauliZ(wires=n)) for n in range(self.n_class)]
 
-        self.qnn = circuit
+        # if self.embedding == embedding.AMP: self.qnn = qml.transforms.broadcast_expand(circuit)
+        # self.qnn = circuit
+        self.qnn = qml.transforms.broadcast_expand(circuit)
         # Retrieve parameters per layer from the ansatz
         self._n_params = ansatz.n_total_params
 
@@ -114,6 +116,7 @@ class QNNTorch(Model):
                 # Forward pass
                 # batch_X, batch_y = batch_X.to(self.device), batch_y.to(self.device)  # Ensure batch data is on the same device
                 predictions = self.forward(batch_X)
+
                 # Compute loss
                 loss = self.criterion(predictions, batch_y)  # Ensure all tensors are on the same device
                 loss.backward()
