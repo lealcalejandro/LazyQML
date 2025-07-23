@@ -61,7 +61,7 @@ pip install git+https://github.com/QHPC-SP-Research-Lab/LazyQML
 
 ```python 
 from sklearn.datasets import load_iris
-from lazyqml.lazyqml import *
+from lazyqml import *
 
 # Load data
 data = load_iris()
@@ -88,4 +88,3 @@ If you used LazyQML in your work, please cite:
 
 ## License
 - Free software: MIT License
-

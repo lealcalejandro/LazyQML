@@ -4,11 +4,12 @@ import numpy as np
 import torch
 import psutil
 import GPUtil
+from itertools import product
+from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
 
 # Importing from
-from sklearn.model_selection import LeaveOneOut, StratifiedKFold, train_test_split
 from lazyqml.Global.globalEnums import *
-from itertools import product
+import lazyqml.Global._config as cfg
 
 """
 ------------------------------------------------------------------------------------------------------------------
@@ -74,7 +75,10 @@ def calculate_quantum_memory(num_qubits, overhead=2):
     bytes_per_qubit_state = 16
 
     # Number of possible states is 2^n, where n is the number of qubits
-    num_states = 2 ** num_qubits
+    if get_simulation_type() == "statevector":
+        num_states = 2 ** num_qubits
+    else:
+        num_states =  num_qubits * (get_max_bond_dim() ** 2)
 
     # Total memory in bytes
     total_memory_bytes = num_states * bytes_per_qubit_state * overhead
@@ -113,9 +117,7 @@ def calculate_free_video_memory():
         print(f"Error calculating free video memory: {e}")
         return 0  # Return None or an appropriate default value
 
-
-
-def create_combinations(classifiers, embeddings, ansatzs, features, qubits, FoldID, RepeatID):
+def create_combinations(classifiers, embeddings, ansatzs, features, qubits, folds, repeats):
     classifier_list = []
     embedding_list = []
     ansatzs_list = []
@@ -125,8 +127,10 @@ def create_combinations(classifiers, embeddings, ansatzs, features, qubits, Fold
     embeddings = list(embeddings)
     ansatzs = list(ansatzs)
     qubit_values = sorted(list(qubits))
-    FoldID = sorted(list(FoldID))
-    RepeatID = sorted(list(RepeatID))
+    repeat_range = range(repeats)
+    folds_range = range(folds)
+    
+    cv_size = repeats*folds
 
     if Model.ALL in classifiers:
         classifier_list = Model.list()
@@ -146,25 +150,27 @@ def create_combinations(classifiers, embeddings, ansatzs, features, qubits, Fold
     else:
         ansatzs_list = ansatzs
 
+    combo_counter = 0
     combinations = []
     # Create all base combinations first
     for qubits in qubit_values:
         for classifier in classifier_list:
             temp_combinations = []
-            if classifier == Model.QSVM:
+            if classifier == Model.QSVM or classifier == Model.QKNN:
                 # QSVM doesn't use ansatzs or features but uses qubits
-                temp_combinations = list(product([qubits], [classifier], embedding_list, [None], [None], RepeatID, FoldID))
+                temp_combinations = list(product([qubits], [classifier], embedding_list, [None], [None], repeat_range, folds_range))
             elif classifier == Model.QNN:
                 # QNN uses ansatzs and qubits
-                temp_combinations = list(product([qubits], [classifier], embedding_list, ansatzs_list, [None], RepeatID, FoldID))
+                temp_combinations = list(product([qubits], [classifier], embedding_list, ansatzs_list, [None], repeat_range, folds_range))
             elif classifier == Model.QNN_BAG:
                 # QNN_BAG uses ansatzs, features, and qubits
-                temp_combinations = list(product([qubits], [classifier], embedding_list, ansatzs_list, features, RepeatID, FoldID))
+                temp_combinations = list(product([qubits], [classifier], embedding_list, ansatzs_list, features, repeat_range, folds_range))
 
             # Add memory calculation for each combination
             for combo in temp_combinations:
                 memory = calculate_quantum_memory(combo[0])  # Calculate memory based on number of qubits
-                combinations.append(combo + (memory,))
+                combinations.append((combo_counter // cv_size, *combo, memory))
+                combo_counter += 1
 
     return combinations
 
@@ -247,8 +253,6 @@ def get_train_test_split(cv_indices, repeat_id=0, fold_id=0):
 
     return indices['train_idx'], indices['test_idx']
 
-
-
 def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
                 train_idx, test_idx, ansatz=None, embedding=None):
     """
@@ -291,5 +295,57 @@ def dataProcessing(X, y, prepFactory, customImputerCat, customImputerNum,
     y_test = np.array(y_test)
 
     return X_train_processed, X_test_processed, y_train, y_test
+
+######
+def get_embedding_expressivity(nqubits, embedding):
+    if embedding == Embedding.AMP:
+        return 2**nqubits
+    elif embedding == Embedding.DENSE_ANGLE:
+        return 2*nqubits
+    else:
+        return nqubits
+    
+def find_output_shape(model, sample):
+    sample = torch.Tensor(sample)
+
+    output = torch.flatten(model(sample))
+    return output.shape[0]
+
+
+######
+def set_max_bond_dim(dim: int):
+    """
+    Sets the maximum bond dimension for tensor network simulation.
+
+    Parameters
+    ----------
+    dim : int
+        Maximum bond dimension
+    """
+    cfg._max_bond_dim = dim
+
+def get_max_bond_dim():
+    return cfg._max_bond_dim
+
+def set_simulation_type(sim):
+    """
+    Sets the qubit representation for quantum circuit simulation.
+
+    Parameters
+    ----------
+    sim : str
+        String that represents the type of simulation. 'tensor' for tensor network simulation and 'statevector' for state vector simulation.
+    """
+    try:
+        assert sim == "statevector" or sim == "tensor"
+        cfg._simulation = sim
+
+    except Exception as e:
+        raise ValueError(f"Simulation type must be \"statevector\" or \"tensor\". Got \"{sim}\"")
+    
+
+def get_simulation_type():
+    return cfg._simulation
+######
 
 printer = VerbosePrinter()
