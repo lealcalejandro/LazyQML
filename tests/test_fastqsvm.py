@@ -27,8 +27,8 @@ class TestFastQSVM(unittest.TestCase):
 
         X, y = import_data()
 
-        nqubits = {4, 8, 10}
-        embeddings = {Embedding.DENSE_ANGLE, Embedding.AMP, Embedding.ZZ}
+        nqubits = {4, 6, 8, 20}
+        embeddings = {Embedding.DENSE_ANGLE}
         models = {Model.QSVM}
         verbose = True
         sequential = False

@@ -1,4 +1,4 @@
-from lazyqml.Models import QNNTorch, QNNBag, QSVM, QKNN, BaseHybridQNNModel, BasicHybridModel, HQCNN
+from lazyqml.Models import QNNTorch, QNNBag, QSVM, QKNN, BaseHybridQNNModel, BasicHybridModel
 from lazyqml.Global.globalEnums import *
 from lazyqml.Utils import get_simulation_type, get_max_bond_dim
 
