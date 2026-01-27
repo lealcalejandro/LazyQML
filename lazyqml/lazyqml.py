@@ -78,13 +78,13 @@ class QuantumClassifier(BaseModel):
     classifiers: Annotated[Set[Model], Field(min_items=1)] = {Model.ALL}
     ansatzs: Annotated[Set[Ansatzs], Field(min_items=1)] = {Ansatzs.ALL}
     embeddings: Annotated[Set[Embedding], Field(min_items=1)] = {Embedding.ALL}
-    backend: Backend = Backend.lightningQubit
+    # backend: Backend = Backend.lightningQubit
     learningRate: Annotated[float, Field(gt=0)] = 0.01
     epochs: Annotated[int, Field(gt=0)] = 100
     shots: Annotated[int, Field(gt=0)] = 1
     runs: Annotated[int, Field(gt=0)] = 1
     batchSize: Annotated[int, Field(gt=0)] = 8
-    threshold: Annotated[int, Field(gt=0)] = 22
+    # threshold: Annotated[int, Field(gt=0)] = 22
     numSamples: Annotated[float, Field(gt=0, le=1)] = 1.0
     numFeatures: Annotated[Set[float], Field(min_items=1)] = {0.3, 0.5, 0.8}
     verbose: bool = False
@@ -189,7 +189,7 @@ class QuantumClassifier(BaseModel):
     def model_post_init(self, ctx):
         self._dispatcher = Dispatcher(
             sequential=self.sequential,
-            threshold=self.threshold,
+            # threshold=self.threshold,
             cores=self.cores,
             randomstate=self.randomstate,
             nqubits=self.nqubits,
@@ -198,7 +198,7 @@ class QuantumClassifier(BaseModel):
             numLayers=self.numLayers,
             classifiers=self.classifiers,
             ansatzs=self.ansatzs,
-            backend=self.backend,
+            # backend=self.backend,
             embeddings=self.embeddings,
             learningRate=self.learningRate,
             epochs=self.epochs,
@@ -318,3 +318,33 @@ class QuantumClassifier(BaseModel):
         # self.repeated_cross_validation(X, y, len(X), 1, showTable)
 
         return scores
+    
+
+from sklearn.datasets import load_iris
+import numpy as np
+
+def import_data():
+    dataset = load_iris()
+    X, y = dataset.data, dataset.target
+
+    return X, y
+
+if __name__ == '__main__':
+    X, y = import_data()
+
+    qubits = 4
+    nqubits = {4, 8}
+    embeddings = {Embedding.RX, Embedding.DENSE_ANGLE}
+    ansatzs = {Ansatzs.TWO_LOCAL}
+    models = {Model.QSVM, Model.QKNN}
+    layers = 2
+    verbose = True
+    sequential = False
+    epochs = 10
+
+    qc = QuantumClassifier(nqubits=nqubits, embeddings=embeddings, ansatzs=ansatzs, classifiers=models, numLayers=layers,
+                        verbose=verbose, sequential=sequential, epochs=epochs)
+    
+    # if cores > 1: qc.repeated_cross_validation(X,y,n_splits=splits,n_repeats=repeats)
+    # else: qc.fit(X, y)
+    qc.fit(X, y)

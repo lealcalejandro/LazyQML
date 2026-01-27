@@ -15,9 +15,34 @@ import queue
 from time import time, sleep
 
 class Dispatcher:
-    def __init__(self, nqubits, randomstate, predictions, shots, numPredictors, numLayers, classifiers, ansatzs, backend, embeddings, numFeatures, learningRate, epochs, runs, batch, numSamples, customMetric, customImputerNum, customImputerCat, sequential=False, threshold=22, time=True, cores=-1):
+    def __init__(self,
+                nqubits,
+                randomstate,
+                predictions,
+                shots,
+                numPredictors,
+                numLayers,
+                classifiers,
+                ansatzs,
+                # backend,
+                embeddings,
+                numFeatures,
+                learningRate,
+                epochs,
+                runs,
+                batch,
+                numSamples,
+                customMetric,
+                customImputerNum,
+                customImputerCat,
+                sequential=False,
+                # threshold=22,
+                time=True,
+                cores=-1
+                ):
+
         self.sequential = sequential
-        self.threshold = threshold
+        self.threshold = 18
         self.timeM = time
         self.cores = cores
 
@@ -28,7 +53,7 @@ class Dispatcher:
         self.numLayers = numLayers
         self.classifiers = classifiers
         self.ansatzs = ansatzs
-        self.backend = backend
+        # self.backend = backend
         self.embeddings = embeddings
         self.learningRate = learningRate
         self.epochs = epochs
@@ -42,7 +67,6 @@ class Dispatcher:
 
     def execute_model(self, id, model_params, X_train, y_train, X_test, y_test, customMetric):
         model = ModelFactory().getModel(**model_params)
-        preds = []
         accuracy, b_accuracy, f1, custom = 0, 0, 0, 0
 
         start = time()
@@ -206,8 +230,6 @@ class Dispatcher:
             random_state=self.randomstate,
             test_size=testsize
         )
-
-        # print(cv_indices)
 
         """
         ################################################################################
