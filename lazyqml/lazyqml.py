@@ -226,7 +226,7 @@ class QuantumClassifier(BaseModel):
         # Fix seed
         fixSeed(self.randomstate)
 
-    def fit(self, X, y, test_size=0.4, showTable=True):
+    def fit(self, X, y, test_size=0.3, showTable=True):
         """
         Main method of the QuantumClassifier class. Divides the input dataset in train and test according to the test_size parameter, creates and builds all the quantum models using the previously introduced parameters and trains them using X as training datapoints and y as target tags. 
 

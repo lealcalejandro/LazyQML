@@ -11,8 +11,10 @@ import numpy as np
 
 class Sanitizer(Preprocessing):
     def __init__(self, imputerCat, imputerNum):
-        scalers = [("robust", RobustScaler()),
-                   ("scaler", MinMaxScaler(feature_range=(0, 2*np.pi), clip=True))]
+        # scalers = [("robust", RobustScaler()),
+        #            ("scaler", MinMaxScaler(feature_range=(0, 2*np.pi), clip=True))]
+        
+        scalers = [("scaler", StandardScaler())]
         
         cat_steps = [("imputer", imputerCat)] + scalers
         num_steps = [("imputer", imputerNum)] + scalers

@@ -3,19 +3,11 @@ import gc
 import numpy     as np
 import pennylane as qml
 import psutil
-import time
 import warnings
 
 from contextlib              import nullcontext
-from pennylane.operation     import Operation
-from sklearn.datasets        import make_classification
-from sklearn.decomposition   import PCA
-from sklearn.metrics         import f1_score, accuracy_score, balanced_accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing   import MinMaxScaler
-from sklearn.preprocessing   import RobustScaler
 from sklearn.svm             import SVC
-from threadpoolctl           import threadpool_limits, threadpool_info
+from threadpoolctl           import threadpool_limits
 
 import numpy as np
 from sklearn.svm import SVC
@@ -224,16 +216,18 @@ class QSVM(Model):
                 i_end = min(i_start + bs1, n1)
                 m1    = i_end - i_start
 
-                for k in range(m1):
-                    x_buf[k, :] = self.kernel_circ(X1[i_start + k])
+                with threadpool_limits(limits=1, user_api=self.numpy_api):
+                    for k in range(m1):
+                        x_buf[k, :] = self.kernel_circ(X1[i_start + k])
                 x_view = x_buf[:m1, :]
 
                 for j_start in range(0, n2, bs2):
                     j_end = min(j_start + bs2, n2)
                     m2    = j_end - j_start
 
-                    for k in range(m2):
-                        y_buf[k, :] = self.kernel_circ(X2[j_start + k])
+                    with threadpool_limits(limits=1, user_api=self.numpy_api):
+                        for k in range(m2):
+                            y_buf[k, :] = self.kernel_circ(X2[j_start + k])
                     y_view = y_buf[:m2, :]
 
                     with self._threadpool_ctx():
