@@ -84,7 +84,7 @@ class QuantumClassifier(BaseModel):
     shots: Annotated[int, Field(gt=0)] = 1
     runs: Annotated[int, Field(gt=0)] = 1
     batchSize: Annotated[int, Field(gt=0)] = 8
-    # threshold: Annotated[int, Field(gt=0)] = 22
+    threshold: Annotated[int, Field(gt=0)] = 14
     numSamples: Annotated[float, Field(gt=0, le=1)] = 1.0
     numFeatures: Annotated[Set[float], Field(min_items=1)] = {0.3, 0.5, 0.8}
     verbose: bool = False
@@ -189,7 +189,7 @@ class QuantumClassifier(BaseModel):
     def model_post_init(self, ctx):
         self._dispatcher = Dispatcher(
             sequential=self.sequential,
-            # threshold=self.threshold,
+            threshold=self.threshold,
             cores=self.cores,
             randomstate=self.randomstate,
             nqubits=self.nqubits,

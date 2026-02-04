@@ -12,7 +12,8 @@ import psutil
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
 import queue
-from time import time, sleep
+import time
+from time import sleep
 
 class Dispatcher:
     def __init__(self,
@@ -36,13 +37,13 @@ class Dispatcher:
                 customImputerNum,
                 customImputerCat,
                 sequential=False,
-                # threshold=22,
+                threshold=14,
                 time=True,
                 cores=-1
                 ):
 
         self.sequential = sequential
-        self.threshold = 18
+        self.threshold = threshold
         self.timeM = time
         self.cores = cores
 
@@ -69,18 +70,16 @@ class Dispatcher:
         model = ModelFactory().getModel(**model_params)
         accuracy, b_accuracy, f1, custom = 0, 0, 0, 0
 
-        start = time()
-
+        start = time.perf_counter()
         model.fit(X=X_train, y=y_train)
         y_pred = model.predict(X=X_test)
+        exeT = time.perf_counter() - start
 
         accuracy += accuracy_score(y_test, y_pred, normalize=True)
         b_accuracy += balanced_accuracy_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred, average="weighted")
         if customMetric is not None:
             custom = customMetric(y_test, y_pred)
-
-        exeT = time() - start
 
         # Construct dataframe with results
         dict_keys = ['nqubits', 'model', 'embedding', 'ansatz', 'n_features', 'n_samples']
@@ -126,6 +125,7 @@ class Dispatcher:
                 available_cores = numProcs
             else:
                 available_cores = self.cores
+                # print(f"Available cores: {available_cores}")
         else:
             available_cores = 1
 
@@ -196,7 +196,7 @@ class Dispatcher:
                 traceback.print_exc()
                 break
 
-    def dispatch(self, X, y, showTable, folds=10, repeats=5, mode="cross-validation", testsize=0.4):
+    def dispatch(self, X, y, showTable, folds=10, repeats=5, mode="cross-validation", testsize=0.3):
         """
         ################################################################################
         Preparing Data Structures & Initializing Variables
@@ -237,7 +237,7 @@ class Dispatcher:
         ################################################################################
         """
 
-        t_pre = time()
+        t_pre = time.perf_counter()
         combinations = create_combinations(qubits=self.nqubits,
                                         classifiers=self.classifiers,
                                         embeddings=self.embeddings,
@@ -289,6 +289,10 @@ class Dispatcher:
                 embedding=embedding
             )
 
+            # X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+            # print()
+            # print(X_train[:5], X_test[:5])
+
             model_factory_params = {
                 "nqubits": adjustedQubits,
                 "model": name,
@@ -333,7 +337,7 @@ class Dispatcher:
                 cpu_items.append(combination)
 
         if self.timeM:
-            printer.print(f"PREPROCESSING TIME: {time()-t_pre}")
+            printer.print(f"PREPROCESSING TIME: {time.perf_counter()-t_pre}")
 
         """
         ################################################################################
@@ -343,7 +347,7 @@ class Dispatcher:
         # Wait a bit to add remaining tasks to queue
         sleep(0.1)
 
-        executionTime = time()
+        executionTime = time.perf_counter()
         gpu_process = None
         # Start GPU process
         if not gpu_queue.empty():
@@ -358,7 +362,7 @@ class Dispatcher:
         if gpu_process is not None:
             gpu_process.join()
 
-        executionTime = time()-executionTime
+        executionTime = time.perf_counter()-executionTime
         printer.print(f"Execution TIME: {executionTime}")
 
         """
@@ -366,7 +370,7 @@ class Dispatcher:
         Processing results
         ################################################################################
         """
-        t_res = time()
+        t_res = time.perf_counter()
 
         all_results = pd.concat(list(results)).reset_index(drop=True)
 
@@ -406,6 +410,6 @@ class Dispatcher:
             print(scores.to_markdown())
 
         if self.timeM:
-            printer.print(f"RESULTS TIME: {time() - t_res}")
+            printer.print(f"RESULTS TIME: {time.perf_counter() - t_res}")
 
         return scores

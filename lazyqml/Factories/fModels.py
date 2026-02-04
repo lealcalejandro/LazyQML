@@ -28,6 +28,7 @@ class ModelFactory:
         
         elif model == Model.QNN:
             print(f"N = {nqubits} -> backend {backend.value}")
+
             # Create device
             if get_simulation_type() == "tensor":
                 if backend != Backend.lightningTensor:
@@ -60,15 +61,13 @@ class ModelFactory:
                 'lr': lr,
                 'batch_size': batch_size,
                 'seed': seed,
-                'device': qdevice,
-                'backend': backend,
-                'diff_method': diff_method
+                'torch_device': "cpu",
+                'backend': backend.value,
+                'diff_method': "best"
             }
 
             # print(params)
             return QNNTorch(**params)
-            return BasicHybridModel(**params)
-            return HQCNN(**params)
         
         elif model == Model.QNN_BAG:
             return QNNBag(nqubits=nqubits, ansatz=ansatz, embedding=embedding, 
