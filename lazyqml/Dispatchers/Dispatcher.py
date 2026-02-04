@@ -4,11 +4,12 @@ from lazyqml.Factories import ModelFactory, PreprocessingFactory
 from lazyqml.Global.globalEnums import Model, Backend
 from .Tasks import QMLTask
 from lazyqml.Utils import printer, calculate_free_memory, get_simulation_type, calculate_free_video_memory, generate_cv_indices, create_combinations, calculate_quantum_memory, get_train_test_split, dataProcessing
+
     # External Libraries
 import numpy as np
 import pandas as pd
 import psutil
-
+from threadpoolctl   import threadpool_limits
 from sklearn.metrics import f1_score, accuracy_score, balanced_accuracy_score
 from multiprocessing import Queue, Process, Pool, Manager
 import queue
@@ -71,8 +72,14 @@ class Dispatcher:
         accuracy, b_accuracy, f1, custom = 0, 0, 0, 0
 
         start = time.perf_counter()
-        model.fit(X=X_train, y=y_train)
-        y_pred = model.predict(X=X_test)
+        # To force limit the ammount of threads the experiment uses
+        if model_params["model"] == Model.QNN:
+            with threadpool_limits(limits=1):
+                model.fit(X=X_train, y=y_train)
+                y_pred = model.predict(X=X_test)
+        else:
+            model.fit(X=X_train, y=y_train)
+            y_pred = model.predict(X=X_test)
         exeT = time.perf_counter() - start
 
         accuracy += accuracy_score(y_test, y_pred, normalize=True)

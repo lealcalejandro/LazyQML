@@ -29,27 +29,6 @@ class ModelFactory:
         elif model == Model.QNN:
             print(f"N = {nqubits} -> backend {backend.value}")
 
-            # Create device
-            if get_simulation_type() == "tensor":
-                if backend != Backend.lightningTensor:
-                    device_kwargs = {
-                        "max_bond_dim": get_max_bond_dim(),
-                        "cutoff": np.finfo(np.complex128).eps,
-                        "contract": "auto-mps",
-                    }
-                else:
-                    device_kwargs = {
-                        "max_bond_dim": get_max_bond_dim(),
-                        "cutoff": 1e-10,
-                        "cutoff_mode": "abs",
-                    }
-                    
-                qdevice = qml.device(backend.value, wires=nqubits, method='mps', **device_kwargs)
-                diff_method = 'best'
-            else:
-                qdevice = qml.device(backend.value, wires=nqubits)
-                diff_method = 'adjoint'
-
             params = {
                 'nqubits': nqubits,
                 'ansatz': ansatz,

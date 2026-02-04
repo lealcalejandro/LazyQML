@@ -1,6 +1,8 @@
 import warnings
 
 from lazyqml.Factories import CircuitFactory
+from lazyqml.Global.globalEnums import Backend
+from lazyqml.Utils.Utils import get_max_bond_dim, get_simulation_type
 
 import numpy     as np
 import pennylane as qml
@@ -56,10 +58,24 @@ class QNNTorch:
         return self._n_params
 
     def _build_device(self):
-        if self.backend == "default.qubit":
-            self.dev = qml.device(self.backend, wires=self.nqubits, shots=self.shots, max_workers=None)
+        # Create device
+        if get_simulation_type() == "tensor":
+            if self.backend != Backend.lightningTensor:
+                device_kwargs = {
+                    "max_bond_dim": get_max_bond_dim(),
+                    "cutoff": np.finfo(np.complex128).eps,
+                    # "contract": "auto-mps",
+                }
+            else:
+                device_kwargs = {
+                    "max_bond_dim": get_max_bond_dim(),
+                    "cutoff": 1e-10,
+                    "cutoff_mode": "abs",
+                }
+            
+            self.dev = qml.device(self.backend, wires=self.nqubits, method='mps', **device_kwargs)
         else:
-            self.dev = qml.device(self.backend, wires=self.nqubits, shots=self.shots)
+            self.dev = qml.device(self.backend, wires=self.nqubits)
 
     def _build_qnode(self):
         wires = range(self.nqubits)
